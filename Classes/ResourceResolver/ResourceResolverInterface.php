@@ -15,5 +15,4 @@ interface ResourceResolverInterface
     public function getIntendedEmail(): ?string;
 
     public function getRemoteUser(): ResourceOwnerInterface;
-
 }

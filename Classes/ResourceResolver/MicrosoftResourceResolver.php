@@ -7,7 +7,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class MicrosoftResourceResolver extends GenericResourceResolver
 {
-
     public function updateBackendUser(array &$beUser): void
     {
         $remoteUser = $this->getRemoteUser()->toArray();

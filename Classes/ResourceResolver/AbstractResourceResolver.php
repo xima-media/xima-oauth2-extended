@@ -8,7 +8,6 @@ use Waldhacker\Oauth2Client\Events\FrontendUserLookupEvent;
 
 abstract class AbstractResourceResolver implements ResourceResolverInterface
 {
-
     public function getRemoteUser(): ResourceOwnerInterface
     {
         return $this->userLookupEvent->getRemoteUser();
@@ -18,5 +17,4 @@ abstract class AbstractResourceResolver implements ResourceResolverInterface
         protected readonly FrontendUserLookupEvent|BackendUserLookupEvent $userLookupEvent
     ) {
     }
-
 }

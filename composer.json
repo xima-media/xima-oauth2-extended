@@ -1,6 +1,6 @@
 {
 	"name": "xima/xima-oauth2-extended",
-	"description": "Adds additional OAuth2 provider and enables on-the-fly user creation",
+	"description": "Additional OAuth2 provider + on-the-fly user creation",
 	"type": "typo3-cms-extension",
 	"authors": [
 		{

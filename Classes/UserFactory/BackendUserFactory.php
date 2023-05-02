@@ -12,7 +12,6 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
-use Xima\XimaOauth2Extended\ResourceResolver\AbstractResourceResolver;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
 
 class BackendUserFactory
@@ -86,7 +85,6 @@ class BackendUserFactory
                 return null;
             }
         }
-
 
         // update
         $this->resolver->updateBackendUser($userRecord);

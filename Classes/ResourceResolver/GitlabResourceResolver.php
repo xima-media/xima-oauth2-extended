@@ -4,8 +4,6 @@ namespace Xima\XimaOauth2Extended\ResourceResolver;
 
 class GitlabResourceResolver extends GenericResourceResolver
 {
-
-
     public function updateBackendUser(array &$beUser): void
     {
         $remoteUser = $this->getRemoteUser()->toArray();
