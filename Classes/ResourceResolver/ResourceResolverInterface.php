@@ -8,7 +8,7 @@ interface ResourceResolverInterface
 {
     public function updateBackendUser(array &$beUser): void;
 
-    public function updateFrontendUser(array &$beUser): void;
+    public function updateFrontendUser(array &$feUser): void;
 
     public function getIntendedUsername(): ?string;
 
