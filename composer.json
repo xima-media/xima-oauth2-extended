@@ -2,6 +2,7 @@
 	"name": "xima/xima-oauth2-extended",
 	"description": "Additional OAuth2 provider + on-the-fly user creation",
 	"type": "typo3-cms-extension",
+	"license": "GPL-2.0-or-later ",
 	"authors": [
 		{
 			"name": "Maik Schneider",
