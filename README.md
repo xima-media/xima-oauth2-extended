@@ -13,7 +13,7 @@ To create frontend or backend users from OAuth2 authentication, you can create y
 ```php
 
 'EXTENSIONS' => [
-    // existing configuration of waldhacker/ext-oauth2-client
+    // your existing configuration of waldhacker/ext-oauth2-client
     'oauth2_client' => [
         'providers' => [
             'yourProviderId' => [
@@ -22,16 +22,15 @@ To create frontend or backend users from OAuth2 authentication, you can create y
                 ...
             ],
             'secondProviderId' => [
-                'description' => 'Another provider',
-                'implementationClassName' => 'Xima\XimaOauth2Extended\ResourceProvider\MicrosoftResourceProvider',
+                'description' => 'Another provider'
+                ...
             ]
         ]
     ],
 
-    // extend provider configuration for ResourceResolver
     'xima-oauth2-extended' => [
         'oauth2_client_providers' => [
-            // provider of waldhacker/ext-oauth2-client  you want to extend
+            // provider of waldhacker/ext-oauth2-client you want to extend
             'yourProviderId' => [
                 'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\MicrosoftResourceResolver::class,
                 'createBackendUser' => true,
@@ -39,8 +38,21 @@ To create frontend or backend users from OAuth2 authentication, you can create y
                 'defaultBackendUsergroup' => '1,3'
                 'defaultFrontendUsergroup' => ''
             ],
+            'secondProviderId' => [
+                'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\GenericResolver::class
+                'createBackendUser' => true,
+                'createFrontendUser' => true,
+                'defaultBackendUsergroup' => ''
+                'defaultFrontendUsergroup' => ''
+            ]
         ],
     ],
 ]
 
 ```
+
+## Available resolver
+
+* GenericResolver
+* MicrosoftResourceResolver
+* GitlabResourceResolver
