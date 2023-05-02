@@ -1,6 +1,6 @@
 # XIMA OAuth2 Extended
 
-This repository contains additional provider for [league/oauth2-client](https://github.com/thephpleague/oauth2-client). When installed as TYPO3 extension, it is possible to extend the [waldhacker/ext-oauth2-client](waldhacker/ext-oauth2-client) for on-the-fly user creation.
+This repository contains additional provider for [league/oauth2-client](https://github.com/thephpleague/oauth2-client). When installed as TYPO3 extension, it is possible to extend the [waldhacker/ext-oauth2-client](https://github.com/waldhacker/ext-oauth2-client) for on-the-fly user creation.
 
 ## New provider
 
