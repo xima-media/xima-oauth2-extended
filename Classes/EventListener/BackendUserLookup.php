@@ -9,7 +9,7 @@ use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExis
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Events\BackendUserLookupEvent;
-use Xima\XimaOauth2Extended\ResourceResolver\Exception\IdentityResolverException;
+use Xima\XimaOauth2Extended\Exception\IdentityResolverException;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
 use Xima\XimaOauth2Extended\UserFactory\BackendUserFactory;
 

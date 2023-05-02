@@ -4,27 +4,22 @@ namespace Xima\XimaOauth2Extended\EventListener;
 
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use Psr\Log\LoggerInterface;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Events\FrontendUserLookupEvent;
-use Xima\XmDkfzNetSite\ResourceResolver\AbstractResolver;
-use Xima\XmDkfzNetSite\ResourceResolver\DkfzResourceResolver;
-use Xima\XmDkfzNetSite\ResourceResolver\GitlabResolver;
-use Xima\XmDkfzNetSite\ResourceResolver\XimaResolver;
-use Xima\XmDkfzNetSite\UserFactory\FrontendUserFactory;
+use Xima\XimaOauth2Extended\Exception\IdentityResolverException;
+use Xima\XimaOauth2Extended\Exception\OAuth2ConfigurationException;
+use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
+use Xima\XimaOauth2Extended\UserFactory\FrontendUserFactory;
 
 class FrontendUserLookup
 {
-    private LoggerInterface $logger;
-
-    protected FrontendUserFactory $frontendUserFactory;
-
-    protected ?array $typo3User = null;
-
-    public function __construct(LoggerInterface $logger, FrontendUserFactory $frontendUserFactory)
-    {
-        $this->logger = $logger;
-        $this->frontendUserFactory = $frontendUserFactory;
+    public function __construct(
+        private readonly LoggerInterface $logger,
+        private readonly ExtensionConfiguration $extensionConfiguration
+    ) {
     }
 
     public function __invoke(FrontendUserLookupEvent $event): void
@@ -32,53 +27,57 @@ class FrontendUserLookup
         if ($event->getTypo3User() !== null || !($event->getRemoteUser() instanceof ResourceOwnerInterface)) {
             return;
         }
-        $this->logger->debug('Creating remote user from provider "' . $event->getProviderId() . '" (remote id: ' . $event->getRemoteUser()->getId() . ')');
 
-        $resolver = $this->createResolver($event);
+        $providerId = $event->getProviderId();
+        $extendedProviderConfiguration = $this->extensionConfiguration->get('xima-oauth2-extended', $providerId) ?? [];
+        $resolverClass = $extendedProviderConfiguration['resolverClassName'] ?? '';
 
-        $this->frontendUserFactory->setResolver($resolver);
-
-        /** @var Site|null $site */
-        $site = $event->getSite();
-        $language = $event->getLanguage();
-        if ($site === null || $language === null) {
+        if (!$resolverClass) {
             return;
         }
-        $siteConfiguration = $site->getConfiguration();
-        $languageConfiguration = $language->toArray();
-        $storagePid = empty($languageConfiguration['oauth2_storage_pid'])
-            ? ($siteConfiguration['oauth2_storage_pid'] ?? null)
-            : $languageConfiguration['oauth2_storage_pid'];
 
-        $this->typo3User = $this->frontendUserFactory->registerRemoteUser($storagePid);
+        // create resolver
+        $resolver = GeneralUtility::makeInstance($resolverClass, $event);
+        if (!$resolver instanceof ResourceResolverInterface) {
+            $message = 'Class ' . $resolverClass . ' musst implement interface ' . ResourceResolverInterface::class;
+            throw new IdentityResolverException($message, 1683016777);
+        }
 
-        if ($this->typo3User) {
-            $event->setTypo3User($this->typo3User);
+        // log info
+        $this->logger->info('Register remote user from provider "' . $event->getProviderId() . '" (remote id: ' . $event->getRemoteUser()->getId() . ')');
+
+        // create/link user
+        $userFactory = new FrontendUserFactory($resolver, $providerId, $extendedProviderConfiguration);
+        $storagePid = $this->getUserStoragePid($event);
+        $typo3User = $userFactory->registerRemoteUser($storagePid);
+
+        // add user to event
+        if ($typo3User) {
+            $event->setTypo3User($typo3User);
         }
     }
 
     /**
-     * @throws \Exception
+     * @throws SiteNotFoundException
+     * @throws OAuth2ConfigurationException
      */
-    public function createResolver(FrontendUserLookupEvent $event): AbstractResolver
+    protected function getUserStoragePid(FrontendUserLookupEvent $event): int
     {
-        $resolverClasses = [
-            'gitlab' => GitlabResolver::class,
-            'dkfz' => DkfzResourceResolver::class,
-            'xima' => XimaResolver::class,
-        ];
-        $resolverClass = $resolverClasses[$event->getProviderId()] ?? false;
-
-        if (!$resolverClass) {
-            throw new \Exception('No Resolver found for provider id "' . $event->getProviderId() . '"');
+        /** @var Site|null $site */
+        $site = $event->getSite();
+        $language = $event->getLanguage();
+        if ($site === null || $language === null) {
+            throw new SiteNotFoundException('Could not resolve site config in FrontendUserLookup', 1683033518);
+        }
+        $siteConfiguration = $site->getConfiguration();
+        $languageConfiguration = $language->toArray();
+        if ($languageConfiguration['oauth2_storage_pid'] ?? '') {
+            return (int)$languageConfiguration['oauth2_storage_pid'];
+        }
+        if ($siteConfiguration['oauth2_storage_pid'] ?? '') {
+            return (int)$siteConfiguration['oauth2_storage_pid'];
         }
 
-        return GeneralUtility::makeInstance(
-            $resolverClass,
-            $event->getProvider(),
-            $event->getRemoteUser(),
-            $event->getAccessToken(),
-            $event->getProviderId()
-        );
+        throw new OAuth2ConfigurationException('Could not determine frontend user storage pid', 1683034465);
     }
 }

@@ -43,7 +43,7 @@ class BackendUserFactory
         $constraints = [];
         $username = $this->resolver->getIntendedUsername();
         $email = $this->resolver->getIntendedEmail();
-        $qb = $this->getQueryBuilder();
+        $qb = $this->getQueryBuilder('be_users');
 
         if ($username) {
             $constraints[] = $qb->expr()->eq(
@@ -144,7 +144,7 @@ class BackendUserFactory
         }
 
         // update backend user
-        $qb = $this->getQueryBuilder();
+        $qb = $this->getQueryBuilder('be_users');
         $qb->update('be_users')
             ->where(
                 $qb->expr()->eq('uid', (int)$userRecord['uid'])
@@ -163,7 +163,7 @@ class BackendUserFactory
     {
         $password = $userRecord['password'];
 
-        $user = $this->getQueryBuilder()->insert('be_users')
+        $user = $this->getQueryBuilder('be_users')->insert('be_users')
             ->values($userRecord)
             ->execute();
 
@@ -171,7 +171,7 @@ class BackendUserFactory
             return null;
         }
 
-        $qb = $this->getQueryBuilder();
+        $qb = $this->getQueryBuilder('be_users');
         return $qb->select('*')
             ->from('be_users')
             ->where(
@@ -214,7 +214,7 @@ class BackendUserFactory
         ];
     }
 
-    protected function getQueryBuilder($tableName = 'be_users'): QueryBuilder
+    protected function getQueryBuilder(string $tableName): QueryBuilder
     {
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
         $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));

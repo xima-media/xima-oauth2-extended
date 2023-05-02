@@ -1,6 +1,7 @@
 <?php
 
-namespace Xima\XimaOauth2Extended\ResourceResolver\Exception;
+namespace Xima\XimaOauth2Extended\Exception;
+
 class IdentityResolverException extends \Exception
 {
 

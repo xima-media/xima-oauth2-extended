@@ -11,3 +11,8 @@ services:
     tags:
       - name: event.listener
         identifier: 'oauthBeUserRegistration'
+
+  Xima\XimaOauth2Extended\EventListener\FrontendUserLookup:
+    tags:
+      - name: event.listener
+        identifier: 'oauthFeUserRegistration'

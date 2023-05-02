@@ -15,18 +15,24 @@ use TYPO3\CMS\Core\DataHandling\SlugHelper;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2FeUserProviderConfigurationRestriction;
-use Xima\XimaOauth2Extended\ResourceResolver\AbstractResourceResolver;
+use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
 
 class FrontendUserFactory
 {
-    protected AbstractResourceResolver $resolver;
+    protected ResourceResolverInterface $resolver;
 
-    /**
-     * @param AbstractResourceResolver $resolver
-     */
-    public function setResolver(AbstractResourceResolver $resolver): void
-    {
+    protected string $providerId = '';
+
+    protected array $extendedProviderConfiguration = [];
+
+    public function __construct(
+        ResourceResolverInterface $resolver,
+        string $providerId,
+        array $extendedProviderConfiguration
+    ) {
         $this->resolver = $resolver;
+        $this->providerId = $providerId;
+        $this->extendedProviderConfiguration = $extendedProviderConfiguration;
     }
 
     protected function findUserByUsernameOrEmail(): ?array
@@ -66,10 +72,16 @@ class FrontendUserFactory
 
     public function registerRemoteUser(int $targetPid): ?array
     {
-        // find or create
+        $doCreateNewUser = isset($this->extendedProviderConfiguration) && $this->extendedProviderConfiguration['createFrontendUser'];
+
+        // find or optionally create
         $userRecord = $this->findUserByUsernameOrEmail();
         if (!is_array($userRecord)) {
-            $userRecord = $this->createBasicFrontendUser($targetPid);
+            if ($doCreateNewUser) {
+                $userRecord = $this->createBasicFrontendUser($targetPid);
+            } else {
+                return null;
+            }
         }
 
         // update
@@ -139,8 +151,8 @@ class FrontendUserFactory
         $qb = $this->getQueryBuilder('tx_oauth2_feuser_provider_configuration');
         $qb->insert('tx_oauth2_feuser_provider_configuration')
             ->values([
-                'identifier' => $this->resolver->getResourceOwner()->getId(),
-                'provider' => $this->resolver->getProviderId(),
+                'identifier' => $this->resolver->getRemoteUser()->getId(),
+                'provider' => $this->providerId,
                 'crdate' => time(),
                 'tstamp' => time(),
                 'cruser_id' => (int)$userRecord['uid'],
@@ -217,9 +229,12 @@ class FrontendUserFactory
         'starttime' => 'int',
         'endtime' => 'int',
         'password' => 'string',
+        'name' => 'string',
+        'usergroup' => 'string',
     ])] public function createBasicFrontendUser(int $targetPid): array
     {
         $saltingInstance = GeneralUtility::makeInstance(PasswordHashFactory::class)->getDefaultHashInstance('FE');
+        $defaultUserGroup = $this->extendedProviderConfiguration['defaultFrontendUsergroup'] ?? '';
 
         return [
             'pid' => $targetPid,
@@ -231,10 +246,11 @@ class FrontendUserFactory
             'password' => $saltingInstance->getHashedPassword(md5(uniqid())),
             'name' => '',
             'username' => '',
+            'usergroup' => $defaultUserGroup,
         ];
     }
 
-    protected function getQueryBuilder($tableName = 'be_users'): QueryBuilder
+    protected function getQueryBuilder(string $tableName): QueryBuilder
     {
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
         $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
