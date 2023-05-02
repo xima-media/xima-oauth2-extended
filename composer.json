@@ -1,0 +1,26 @@
+{
+	"name": "xima/xima-oauth2-extended",
+	"description": "Adds additional OAuth2 provider and enables on-the-fly user creation",
+	"type": "typo3-cms-extension",
+	"authors": [
+		{
+			"name": "Maik Schneider",
+			"email": "maik.schneider@xima.de",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"typo3/cms-core": "^11.0",
+		"league/oauth2-client": "^2.7"
+	},
+	"extra": {
+		"typo3/cms": {
+			"extension-key": "xima-oauth2-extended"
+		}
+	},
+	"autoload": {
+		"psr-4": {
+			"Xima\\XimaOauth2Extended\\": "Classes"
+		}
+	}
+}

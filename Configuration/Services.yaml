@@ -1,0 +1,13 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Xima\XimaOauth2Extended\:
+    resource: '../Classes/*'
+
+  Xima\XimaOauth2Extended\EventListener\BackendUserLookup:
+    tags:
+      - name: event.listener
+        identifier: 'oauthBeUserRegistration'
