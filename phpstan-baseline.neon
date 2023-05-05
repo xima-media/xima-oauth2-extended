@@ -1,0 +1,181 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Unable to resolve the template type T in call to method static method TYPO3\\\\CMS\\\\Core\\\\Utility\\\\GeneralUtility\\:\\:makeInstance\\(\\)$#"
+			count: 1
+			path: Classes/EventListener/BackendUserLookup.php
+
+		-
+			message: "#^Unable to resolve the template type T in call to method static method TYPO3\\\\CMS\\\\Core\\\\Utility\\\\GeneralUtility\\:\\:makeInstance\\(\\)$#"
+			count: 1
+			path: Classes/EventListener/FrontendUserLookup.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceProvider\\\\MicrosoftResourceProvider\\:\\:createResourceOwner\\(\\) has parameter \\$response with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceProvider/MicrosoftResourceProvider.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\GenericResourceResolver\\:\\:updateBackendUser\\(\\) has parameter \\$beUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/GenericResourceResolver.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\GenericResourceResolver\\:\\:updateFrontendUser\\(\\) has parameter \\$feUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/GenericResourceResolver.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\GitlabResourceResolver\\:\\:updateBackendUser\\(\\) has parameter \\$beUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/GitlabResourceResolver.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\GitlabResourceResolver\\:\\:updateFrontendUser\\(\\) has parameter \\$feUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/GitlabResourceResolver.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\MicrosoftResourceResolver\\:\\:resolveRemotePicture\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/MicrosoftResourceResolver.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\MicrosoftResourceResolver\\:\\:updateBackendUser\\(\\) has parameter \\$beUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/MicrosoftResourceResolver.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\MicrosoftResourceResolver\\:\\:updateFrontendUser\\(\\) has parameter \\$feUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/MicrosoftResourceResolver.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\ResourceResolverInterface\\:\\:updateBackendUser\\(\\) has parameter \\$beUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/ResourceResolverInterface.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\ResourceResolverInterface\\:\\:updateFrontendUser\\(\\) has parameter \\$feUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/ResourceResolverInterface.php
+
+		-
+			message: "#^Attribute class JetBrains\\\\PhpStorm\\\\ArrayShape does not exist\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Cannot call method fetchAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			count: 2
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:__construct\\(\\) has parameter \\$extendedProviderConfiguration with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:createBasicBackendUser\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:findUserByUsernameOrEmail\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:persistAndRetrieveUser\\(\\) has parameter \\$userRecord with no type specified\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:persistAndRetrieveUser\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:persistAndRetrieveUser\\(\\) should return array\\|null but returns array\\<string, mixed\\>\\|false\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:persistIdentityForUser\\(\\) has parameter \\$userRecord with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:persistIdentityForUser\\(\\) invoked with 2 parameters, 1 required\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:registerRemoteUser\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Property Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:\\$extendedProviderConfiguration type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Attribute class JetBrains\\\\PhpStorm\\\\ArrayShape does not exist\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Cannot call method fetchAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			count: 2
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:__construct\\(\\) has parameter \\$extendedProviderConfiguration with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:createBasicFrontendUser\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:findUserByUsernameOrEmail\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:persistAndRetrieveUser\\(\\) has parameter \\$userRecord with no type specified\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:persistAndRetrieveUser\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:persistAndRetrieveUser\\(\\) should return array\\|null but returns array\\<string, mixed\\>\\|false\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:persistIdentityForUser\\(\\) has parameter \\$userRecord with no type specified\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:registerRemoteUser\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:updateFrontendUserSlug\\(\\) has parameter \\$userRecord with no type specified\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Property Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:\\$extendedProviderConfiguration type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/FrontendUserFactory.php
