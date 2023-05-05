@@ -24,6 +24,13 @@ class FrontendUserLookup
     ) {
     }
 
+    /**
+     * @throws SiteNotFoundException
+     * @throws ExtensionConfigurationPathDoesNotExistException
+     * @throws IdentityResolverException
+     * @throws OAuth2ConfigurationException
+     * @throws ExtensionConfigurationExtensionNotConfiguredException
+     */
     public function __invoke(FrontendUserLookupEvent $event): void
     {
         if ($event->getTypo3User() !== null || !($event->getRemoteUser() instanceof ResourceOwnerInterface)) {
@@ -31,13 +38,8 @@ class FrontendUserLookup
         }
 
         $providerId = $event->getProviderId();
-        try {
-            $extendedProviderConfiguration = $this->extensionConfiguration->get('xima-oauth2-extended', $providerId) ?? [];
-        } catch (ExtensionConfigurationPathDoesNotExistException|ExtensionConfigurationExtensionNotConfiguredException) {
-            return;
-        }
-
-        $resolverClass = $extendedProviderConfiguration['resolverClassName'] ?? '';
+        $extendedProviderConfiguration = $this->extensionConfiguration->get('xima_oauth2_extended', 'oauth2_client_providers') ?? [];
+        $resolverClass = $extendedProviderConfiguration[$providerId]['resolverClassName'] ?? '';
         if (!$resolverClass) {
             return;
         }
