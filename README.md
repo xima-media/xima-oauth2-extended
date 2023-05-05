@@ -28,7 +28,7 @@ To create frontend or backend users from OAuth2 authentication, you can create y
         ]
     ],
 
-    'xima-oauth2-extended' => [
+    'xima_oauth2_extended' => [
         'oauth2_client_providers' => [
             // provider of waldhacker/ext-oauth2-client you want to extend
             'yourProviderId' => [

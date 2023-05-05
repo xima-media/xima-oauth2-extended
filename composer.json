@@ -16,7 +16,7 @@
 	},
 	"extra": {
 		"typo3/cms": {
-			"extension-key": "xima-oauth2-extended"
+			"extension-key": "xima_oauth2_extended"
 		}
 	},
 	"autoload": {

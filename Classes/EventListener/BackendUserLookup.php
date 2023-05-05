@@ -33,7 +33,7 @@ class BackendUserLookup
         }
 
         $providerId = $event->getProviderId();
-        $extendedProviderConfiguration = $this->extensionConfiguration->get('xima-oauth2-extended', $providerId) ?? [];
+        $extendedProviderConfiguration = $this->extensionConfiguration->get('xima_oauth2_extended', $providerId) ?? [];
         $resolverClass = $extendedProviderConfiguration['resolverClassName'] ?? '';
 
         if (!$resolverClass) {
