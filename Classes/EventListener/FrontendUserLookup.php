@@ -4,6 +4,8 @@ namespace Xima\XimaOauth2Extended\EventListener;
 
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use Psr\Log\LoggerInterface;
+use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
+use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\Entity\Site;
@@ -29,9 +31,13 @@ class FrontendUserLookup
         }
 
         $providerId = $event->getProviderId();
-        $extendedProviderConfiguration = $this->extensionConfiguration->get('xima_oauth2_extended', $providerId) ?? [];
-        $resolverClass = $extendedProviderConfiguration['resolverClassName'] ?? '';
+        try {
+            $extendedProviderConfiguration = $this->extensionConfiguration->get('xima-oauth2-extended', $providerId) ?? [];
+        } catch (ExtensionConfigurationPathDoesNotExistException|ExtensionConfigurationExtensionNotConfiguredException) {
+            return;
+        }
 
+        $resolverClass = $extendedProviderConfiguration['resolverClassName'] ?? '';
         if (!$resolverClass) {
             return;
         }

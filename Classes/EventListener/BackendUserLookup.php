@@ -22,8 +22,6 @@ class BackendUserLookup
     }
 
     /**
-     * @throws ExtensionConfigurationPathDoesNotExistException
-     * @throws ExtensionConfigurationExtensionNotConfiguredException
      * @throws IdentityResolverException
      */
     public function __invoke(BackendUserLookupEvent $event): void
@@ -33,9 +31,13 @@ class BackendUserLookup
         }
 
         $providerId = $event->getProviderId();
-        $extendedProviderConfiguration = $this->extensionConfiguration->get('xima_oauth2_extended', $providerId) ?? [];
-        $resolverClass = $extendedProviderConfiguration['resolverClassName'] ?? '';
+        try {
+            $extendedProviderConfiguration = $this->extensionConfiguration->get('xima-oauth2-extended', $providerId) ?? [];
+        } catch (ExtensionConfigurationPathDoesNotExistException|ExtensionConfigurationExtensionNotConfiguredException) {
+            return;
+        }
 
+        $resolverClass = $extendedProviderConfiguration['resolverClassName'] ?? '';
         if (!$resolverClass) {
             return;
         }
