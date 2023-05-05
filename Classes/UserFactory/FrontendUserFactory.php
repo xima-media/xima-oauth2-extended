@@ -72,7 +72,7 @@ class FrontendUserFactory
 
     public function registerRemoteUser(int $targetPid): ?array
     {
-        $doCreateNewUser = isset($this->extendedProviderConfiguration) && $this->extendedProviderConfiguration['createFrontendUser'];
+        $doCreateNewUser = isset($this->extendedProviderConfiguration[$this->providerId]['createFrontendUser']) && $this->extendedProviderConfiguration[$this->providerId]['createFrontendUser'];
 
         // find or optionally create
         $userRecord = $this->findUserByUsernameOrEmail();

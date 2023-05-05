@@ -74,7 +74,7 @@ class BackendUserFactory
 
     public function registerRemoteUser(): ?array
     {
-        $doCreateNewUser = isset($this->extendedProviderConfiguration) && $this->extendedProviderConfiguration['createBackendUser'];
+        $doCreateNewUser = isset($this->extendedProviderConfiguration[$this->providerId]['createBackendUser']) && $this->extendedProviderConfiguration[$this->providerId]['createBackendUser'];
 
         // find or optionally create
         $userRecord = $this->findUserByUsernameOrEmail();
