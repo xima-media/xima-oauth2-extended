@@ -12,7 +12,8 @@
 	],
 	"require": {
 		"php": ">=8.1",
-		"league/oauth2-client": ">=2.7"
+		"league/oauth2-client": ">=2.7",
+		"composer req waldhacker/typo3-oauth2-client": "*"
 	},
 	"require-dev": {
 		"saschaegerer/phpstan-typo3": "^1.8",
