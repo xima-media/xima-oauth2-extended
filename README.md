@@ -57,7 +57,19 @@ To create frontend or backend users from OAuth2 authentication, you can create y
 * MicrosoftResourceResolver
 * GitlabResourceResolver
 
-## Order of login provider
+## FAQ
+
+### Register Return-URLs
+
+For the backend login the return url looks like this:
+
+```
+https://domain.de/typo3/login?loginProvider=1616569531&oauth2-provider=yourProviderId&login_status=login&commandLI=attempt
+```
+
+Replace `domain.de` and `yourProviderId` with your data!
+
+### Order of login provider
 
 To change the order of provider displayed at the `/typo3` login page, use the following snippet:
 
