@@ -56,3 +56,11 @@ To create frontend or backend users from OAuth2 authentication, you can create y
 * GenericResolver
 * MicrosoftResourceResolver
 * GitlabResourceResolver
+
+## Order of login provider
+
+To change the order of provider displayed at the `/typo3` login page, use the following snippet:
+
+```php
+$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']['1616569531']['sorting'] = 75;
+```
