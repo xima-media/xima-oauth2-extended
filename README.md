@@ -35,14 +35,14 @@ To create frontend or backend users from OAuth2 authentication, you can create y
                 'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\MicrosoftResourceResolver::class,
                 'createBackendUser' => true,
                 'createFrontendUser' => false,
-                'defaultBackendUsergroup' => '1,3'
+                'defaultBackendUsergroup' => '1,3',
                 'defaultFrontendUsergroup' => ''
             ],
             'secondProviderId' => [
-                'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\GenericResolver::class
+                'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\GenericResolver::class,
                 'createBackendUser' => true,
                 'createFrontendUser' => true,
-                'defaultBackendUsergroup' => ''
+                'defaultBackendUsergroup' => '',
                 'defaultFrontendUsergroup' => ''
             ]
         ],
@@ -71,8 +71,26 @@ Replace `domain.de` and `yourProviderId` with your data!
 
 ### Order of login provider
 
-To change the order of provider displayed at the `/typo3` login page, use the following snippet:
+To change the order of provider displayed at the `/typo3` login page (OAuth login over classic username/password), use the following snippet:
 
 ```php
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']['1616569531']['sorting'] = 75;
+```
+
+### Usage in TYPO3v12
+
+The TYPO3 extension [waldhacker/ext-oauth2-client](https://github.com/waldhacker/ext-oauth2-client) is not yet ready for v12. However, there is a feature branch that is almost working - [this fork](https://github.com/maikschneider/ext-oauth2-client/tree/feature/v12-compatibility-1) makes the trick. To use it, adjust your `composer.json`:
+
+```json
+{
+  "repositories": [
+    {
+      "url": "https://github.com/maikschneider/ext-oauth2-client.git",
+      "type": "git"
+    }
+  ],
+  "require": {
+    "waldhacker/typo3-oauth2-client": "dev-feature/v12-compatibility-1"
+  }
+}
 ```
