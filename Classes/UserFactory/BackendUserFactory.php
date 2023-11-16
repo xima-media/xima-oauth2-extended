@@ -33,6 +33,60 @@ class BackendUserFactory
         $this->extendedProviderConfiguration = $extendedProviderConfiguration;
     }
 
+    public function updateTypo3User(array $typo3User): array
+    {
+        $this->resolver->updateBackendUser($typo3User);
+        $this->updateProfileImage($typo3User);
+
+        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('be_users');
+        foreach($typo3User as $fieldName => $value) {
+            $qb->set($fieldName, $value);
+        }
+        $qb->update('be_users')
+            ->where(
+                $qb->expr()->eq('uid', $qb->createNamedParameter($typo3User['uid'], \PDO::PARAM_INT))
+            )
+            ->executeStatement();
+
+        return $typo3User;
+    }
+
+    private function updateProfileImage(array &$userRecord): void
+    {
+        if (!($this->resolver instanceof ProfileImageResolverInterface)) {
+            return;
+        }
+
+        $qb = $this->getQueryBuilder('sys_file_reference');
+        $result = $qb->select('*')
+            ->from('sys_file_reference')
+            ->where(
+                $qb->expr()->eq('uid_foreign', $qb->createNamedParameter($userRecord['uid'], \PDO::PARAM_INT)),
+                $qb->expr()->eq('tablenames', $qb->createNamedParameter('be_users')),
+                $qb->expr()->eq('fieldname', $qb->createNamedParameter('avatar'))
+            )
+            ->execute()
+            ->fetchOne();
+        if ($result) {
+            return;
+        }
+
+        $extendedProviderConfiguration = $this->extendedProviderConfiguration[$this->providerId] ?? [];
+        $imageUtility = new ImageUserFactory($this->resolver, $extendedProviderConfiguration);
+        $success = $imageUtility->addProfileImageForBackendUser($userRecord['uid']);
+        if ($success) {
+            $userRecord['avatar'] = 1;
+        }
+    }
+
+    protected function getQueryBuilder(string $tableName): QueryBuilder
+    {
+        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
+        $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+
+        return $qb;
+    }
+
     public function registerRemoteUser(): ?array
     {
         $extendedProviderConfiguration = $this->extendedProviderConfiguration[$this->providerId] ?? [];
@@ -62,10 +116,7 @@ class BackendUserFactory
         }
 
         // download profile picture
-        if (!$userRecord['avatar'] && $this->resolver instanceof ProfileImageResolverInterface) {
-            $imageUtility = new ImageUserFactory($this->resolver, $extendedProviderConfiguration);
-            $imageUtility->addProfileImageForBackendUser($userRecord['uid']);
-        }
+        $this->updateProfileImage($userRecord);
 
         try {
             if ($this->persistIdentityForUser($userRecord)) {
@@ -112,14 +163,6 @@ class BackendUserFactory
         return $user ?: null;
     }
 
-    protected function getQueryBuilder(string $tableName): QueryBuilder
-    {
-        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
-        $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        return $qb;
-    }
-
     /**
      * @throws InvalidPasswordHashException
      */
@@ -160,10 +203,6 @@ class BackendUserFactory
     public function persistAndRetrieveUser($userRecord): ?array
     {
         $password = $userRecord['password'];
-
-        if (isset($userRecord['avatarContent']) && $userRecord['avatarContent']) {
-
-        }
 
         $user = $this->getQueryBuilder('be_users')->insert('be_users')
             ->values($userRecord)

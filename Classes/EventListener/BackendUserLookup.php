@@ -28,7 +28,7 @@ class BackendUserLookup
      */
     public function __invoke(BackendUserLookupEvent $event): void
     {
-        if ($event->getTypo3User() !== null || !($event->getRemoteUser() instanceof ResourceOwnerInterface)) {
+        if (!($event->getRemoteUser() instanceof ResourceOwnerInterface)) {
             return;
         }
 
@@ -46,12 +46,16 @@ class BackendUserLookup
             throw new IdentityResolverException($message, 1683016777);
         }
 
-        // log info
-        $this->logger->info('Register remote user from provider "' . $event->getProviderId() . '" (remote id: ' . $event->getRemoteUser()->getId() . ')');
-
-        // create/link user
+        // create/link user or update
         $userFactory = new BackendUserFactory($resolver, $providerId, $extendedProviderConfiguration);
-        $typo3User = $userFactory->registerRemoteUser();
+        $typo3User = $event->getTypo3User();
+        if ($typo3User === null) {
+            $this->logger->info('Register remote user from provider "' . $event->getProviderId() . '" (remote id: ' . $event->getRemoteUser()->getId() . ')');
+            $typo3User = $userFactory->registerRemoteUser();
+        } else {
+            $this->logger->info('Update TYPO3 user from provider "' . $event->getProviderId() . '" (remote id: ' . $event->getRemoteUser()->getId() . ')');
+            $typo3User = $userFactory->updateTypo3User($typo3User);
+        }
 
         // add user to event
         if ($typo3User) {
