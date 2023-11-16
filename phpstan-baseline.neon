@@ -66,6 +66,11 @@ parameters:
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
+			message: "#^Cannot call method fetchOne\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:__construct\\(\\) has parameter \\$extendedProviderConfiguration with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/UserFactory/BackendUserFactory.php
@@ -102,6 +107,21 @@ parameters:
 
 		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:registerRemoteUser\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:updateProfileImage\\(\\) has parameter \\$userRecord with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:updateTypo3User\\(\\) has parameter \\$typo3User with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:updateTypo3User\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/UserFactory/BackendUserFactory.php
 
