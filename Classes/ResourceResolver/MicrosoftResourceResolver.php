@@ -5,7 +5,7 @@ namespace Xima\XimaOauth2Extended\ResourceResolver;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class MicrosoftResourceResolver extends GenericResourceResolver
+class MicrosoftResourceResolver extends GenericResourceResolver implements ProfileImageResolverInterface
 {
     public function updateBackendUser(array &$beUser): void
     {
@@ -25,24 +25,31 @@ class MicrosoftResourceResolver extends GenericResourceResolver
         if (!$beUser['realName']) {
             $beUser['realName'] = $remoteUser['name'];
         }
-
-        //if ($remoteUser['picture'] ?? '') {
-        //    $this->resolveRemotePicture();
-        //}
     }
 
-    protected function resolveRemotePicture()
+    public function resolveProfileImage(): ?string
     {
         $remoteUser = $this->getRemoteUser()->toArray();
+
+        if (!isset($remoteUser['picture']) || !$remoteUser['picture']) {
+            return null;
+        }
+
         $requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
-        $image = $requestFactory->request(
-            $remoteUser['picture'],
-            'GET',
-            [
-                'Authorization' => 'Bearer ' . $this->userLookupEvent->getAccessToken(),
-            ]
-        );
-        $b = $image->getBody();
+        try {
+            $imageResponse = $requestFactory->request(
+                $remoteUser['picture'],
+                'GET',
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $this->userLookupEvent->getAccessToken(),
+                    ],
+                ]
+            );
+            return $imageResponse->getBody()->getContents();
+        } catch (\Exception) {
+        }
+        return null;
     }
 
     public function updateFrontendUser(array &$feUser): void
