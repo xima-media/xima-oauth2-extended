@@ -160,11 +160,6 @@ class BackendUserFactory
     public function persistAndRetrieveUser($userRecord): ?array
     {
         $password = $userRecord['password'];
-
-        if (isset($userRecord['avatarContent']) && $userRecord['avatarContent']) {
-
-        }
-
         $user = $this->getQueryBuilder('be_users')->insert('be_users')
             ->values($userRecord)
             ->execute();
