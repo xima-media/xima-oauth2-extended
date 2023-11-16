@@ -39,7 +39,7 @@ class BackendUserFactory
         $this->updateProfileImage($typo3User);
 
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('be_users');
-        foreach($typo3User as $fieldName => $value) {
+        foreach ($typo3User as $fieldName => $value) {
             $qb->set($fieldName, $value);
         }
         $qb->update('be_users')

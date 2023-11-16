@@ -69,9 +69,14 @@ final class ImageUserFactory
 
     private static function getAbsoluteImageStoragePathFromIdentifier(string $identifier): ?string
     {
-        $storageUid = self::getFileStorageUidFromIdentifier($identifier);
+        $storageUid = self::getFileStorageUidFromIdentifier($identifier) ?? 0;
         $absoluteStoragePath = self::getAbsoluteFileStoragePathFromUid($storageUid);
         $relativeImagePath = self::getRelativeFileStoragePathFromIdentifier($identifier);
+
+        if (!$absoluteStoragePath || !$relativeImagePath) {
+            return null;
+        }
+
         return $absoluteStoragePath . $relativeImagePath;
     }
 

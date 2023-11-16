@@ -36,11 +36,6 @@ parameters:
 			path: Classes/ResourceResolver/GitlabResourceResolver.php
 
 		-
-			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\MicrosoftResourceResolver\\:\\:resolveRemotePicture\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: Classes/ResourceResolver/MicrosoftResourceResolver.php
-
-		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\MicrosoftResourceResolver\\:\\:updateBackendUser\\(\\) has parameter \\$beUser with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/ResourceResolver/MicrosoftResourceResolver.php
@@ -102,11 +97,6 @@ parameters:
 
 		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:persistIdentityForUser\\(\\) has parameter \\$userRecord with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: Classes/UserFactory/BackendUserFactory.php
-
-		-
-			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:persistIdentityForUser\\(\\) invoked with 2 parameters, 1 required\\.$#"
 			count: 1
 			path: Classes/UserFactory/BackendUserFactory.php
 
@@ -179,3 +169,18 @@ parameters:
 			message: "#^Property Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:\\$extendedProviderConfiguration type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/UserFactory/FrontendUserFactory.php
+
+		-
+			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			count: 1
+			path: Classes/UserFactory/ImageUserFactory.php
+
+		-
+			message: "#^Cannot call method fetchFirstColumn\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			count: 1
+			path: Classes/UserFactory/ImageUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\ImageUserFactory\\:\\:__construct\\(\\) has parameter \\$extendedProviderConfiguration with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/ImageUserFactory.php
