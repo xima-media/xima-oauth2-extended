@@ -36,15 +36,16 @@ To create frontend or backend users from OAuth2 authentication, you can create y
                 'createBackendUser' => true,
                 'createFrontendUser' => false,
                 'defaultBackendUsergroup' => '1,3',
-                'defaultFrontendUsergroup' => ''
+                'defaultFrontendUsergroup' => '',
+                'imageStorageBackendIdentifier' => '1:/user_upload/oauth',
             ],
             'secondProviderId' => [
                 'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\GenericResolver::class,
                 'createBackendUser' => true,
                 'createFrontendUser' => true,
                 'defaultBackendUsergroup' => '',
-                'defaultFrontendUsergroup' => ''
-            ]
+                'defaultFrontendUsergroup' => '',
+            ],
         ],
     ],
 ]

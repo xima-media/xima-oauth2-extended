@@ -12,6 +12,7 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
+use Xima\XimaOauth2Extended\ResourceResolver\ProfileImageResolverInterface;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
 
 class BackendUserFactory
@@ -32,9 +33,48 @@ class BackendUserFactory
         $this->extendedProviderConfiguration = $extendedProviderConfiguration;
     }
 
-    public function setResolver(ResourceResolverInterface $resolver): void
+    public function registerRemoteUser(): ?array
     {
-        $this->resolver = $resolver;
+        $extendedProviderConfiguration = $this->extendedProviderConfiguration[$this->providerId] ?? [];
+        $doCreateNewUser = isset($extendedProviderConfiguration['createBackendUser']) && $extendedProviderConfiguration['createBackendUser'];
+
+        // find or optionally create
+        $userRecord = $this->findUserByUsernameOrEmail();
+        if (!is_array($userRecord)) {
+            if ($doCreateNewUser) {
+                $userRecord = $this->createBasicBackendUser();
+            } else {
+                return null;
+            }
+        }
+
+        // update
+        $this->resolver->updateBackendUser($userRecord);
+
+        // test for username
+        if (!$userRecord['username']) {
+            return null;
+        }
+
+        // test for persistence
+        if (!isset($userRecord['uid'])) {
+            $userRecord = $this->persistAndRetrieveUser($userRecord);
+        }
+
+        // download profile picture
+        if (!$userRecord['avatar'] && $this->resolver instanceof ProfileImageResolverInterface) {
+            $imageUtility = new ImageUserFactory($this->resolver, $extendedProviderConfiguration);
+            $imageUtility->addProfileImageForBackendUser($userRecord['uid']);
+        }
+
+        try {
+            if ($this->persistIdentityForUser($userRecord)) {
+                return $userRecord;
+            }
+        } catch (Exception $e) {
+        }
+
+        return null;
     }
 
     protected function findUserByUsernameOrEmail(): ?array
@@ -72,41 +112,75 @@ class BackendUserFactory
         return $user ?: null;
     }
 
-    public function registerRemoteUser(): ?array
+    protected function getQueryBuilder(string $tableName): QueryBuilder
     {
-        $doCreateNewUser = isset($this->extendedProviderConfiguration[$this->providerId]['createBackendUser']) && $this->extendedProviderConfiguration[$this->providerId]['createBackendUser'];
+        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
+        $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
-        // find or optionally create
-        $userRecord = $this->findUserByUsernameOrEmail();
-        if (!is_array($userRecord)) {
-            if ($doCreateNewUser) {
-                $userRecord = $this->createBasicBackendUser();
-            } else {
-                return null;
-            }
+        return $qb;
+    }
+
+    /**
+     * @throws InvalidPasswordHashException
+     */
+    #[ArrayShape([
+        'username' => 'string',
+        'realName' => 'string',
+        'disable' => 'int',
+        'crdate' => 'int',
+        'tstamp' => 'int',
+        'admin' => 'int',
+        'starttime' => 'int',
+        'endtime' => 'int',
+        'password' => 'string',
+        'usergroup' => 'string',
+    ])] public function createBasicBackendUser(): array
+    {
+        $saltingInstance = GeneralUtility::makeInstance(PasswordHashFactory::class)->getDefaultHashInstance('BE');
+        $defaultUserGroup = $this->extendedProviderConfiguration['defaultBackendUsergroup'] ?? '';
+
+        return [
+            'crdate' => time(),
+            'tstamp' => time(),
+            'admin' => 0,
+            'disable' => 1,
+            'starttime' => 0,
+            'endtime' => 0,
+            'password' => $saltingInstance->getHashedPassword(md5(uniqid('', true))),
+            'realName' => '',
+            'username' => '',
+            'usergroup' => $defaultUserGroup,
+        ];
+    }
+
+    /**
+     * @throws DBALException
+     * @throws Exception
+     */
+    public function persistAndRetrieveUser($userRecord): ?array
+    {
+        $password = $userRecord['password'];
+
+        if (isset($userRecord['avatarContent']) && $userRecord['avatarContent']) {
+
         }
 
-        // update
-        $this->resolver->updateBackendUser($userRecord);
+        $user = $this->getQueryBuilder('be_users')->insert('be_users')
+            ->values($userRecord)
+            ->execute();
 
-        // test for username
-        if (!$userRecord['username']) {
+        if (!$user) {
             return null;
         }
 
-        // test for persistence
-        if (!isset($userRecord['uid'])) {
-            $userRecord = $this->persistAndRetrieveUser($userRecord);
-        }
-
-        try {
-            if ($this->persistIdentityForUser($userRecord, $this->providerId)) {
-                return $userRecord;
-            }
-        } catch (Exception $e) {
-        }
-
-        return null;
+        $qb = $this->getQueryBuilder('be_users');
+        return $qb->select('*')
+            ->from('be_users')
+            ->where(
+                $qb->expr()->eq('password', $qb->createNamedParameter($password))
+            )
+            ->execute()
+            ->fetchAssociative();
     }
 
     /**
@@ -137,7 +211,7 @@ class BackendUserFactory
             ->executeQuery()
             ->fetchOne();
 
-        if (!$identityCount > 0) {
+        if ((!$identityCount) > 0) {
             return false;
         }
 
@@ -151,72 +225,5 @@ class BackendUserFactory
             ->executeStatement();
 
         return true;
-    }
-
-    /**
-     * @throws DBALException
-     * @throws Exception
-     */
-    public function persistAndRetrieveUser($userRecord): ?array
-    {
-        $password = $userRecord['password'];
-
-        $user = $this->getQueryBuilder('be_users')->insert('be_users')
-            ->values($userRecord)
-            ->execute();
-
-        if (!$user) {
-            return null;
-        }
-
-        $qb = $this->getQueryBuilder('be_users');
-        return $qb->select('*')
-            ->from('be_users')
-            ->where(
-                $qb->expr()->eq('password', $qb->createNamedParameter($password))
-            )
-            ->execute()
-            ->fetchAssociative();
-    }
-
-    /**
-     * @throws InvalidPasswordHashException
-     */
-    #[ArrayShape([
-        'username' => 'string',
-        'realName' => 'string',
-        'disable' => 'int',
-        'crdate' => 'int',
-        'tstamp' => 'int',
-        'admin' => 'int',
-        'starttime' => 'int',
-        'endtime' => 'int',
-        'password' => 'string',
-        'usergroup' => 'string',
-    ])] public function createBasicBackendUser(): array
-    {
-        $saltingInstance = GeneralUtility::makeInstance(PasswordHashFactory::class)->getDefaultHashInstance('BE');
-        $defaultUserGroup = $this->extendedProviderConfiguration['defaultBackendUsergroup'] ?? '';
-
-        return [
-            'crdate' => time(),
-            'tstamp' => time(),
-            'admin' => 0,
-            'disable' => 1,
-            'starttime' => 0,
-            'endtime' => 0,
-            'password' => $saltingInstance->getHashedPassword(md5(uniqid())),
-            'realName' => '',
-            'username' => '',
-            'usergroup' => $defaultUserGroup,
-        ];
-    }
-
-    protected function getQueryBuilder(string $tableName): QueryBuilder
-    {
-        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
-        $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        return $qb;
     }
 }
