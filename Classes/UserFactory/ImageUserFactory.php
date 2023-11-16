@@ -8,7 +8,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use Xima\XimaOauth2Extended\ResourceResolver\ProfileImageResolverInterface;
 
-final readonly class ImageUserFactory
+final class ImageUserFactory
 {
     public function __construct(
         private ProfileImageResolverInterface $resolver,
