@@ -5,7 +5,7 @@ namespace Xima\XimaOauth2Extended\ResourceResolver;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class MicrosoftResourceResolver extends GenericResourceResolver implements ProfileImageResolverInterface
+class MicrosoftResourceResolver extends GenericResourceResolver implements ProfileImageResolverInterface, UserGroupResolverInterface
 {
     public function updateBackendUser(array &$beUser): void
     {
@@ -69,5 +69,31 @@ class MicrosoftResourceResolver extends GenericResourceResolver implements Profi
         if (!$feUser['name']) {
             $feUser['name'] = $remoteUser['name'];
         }
+    }
+
+    public function resolveUserGroups(): array
+    {
+        $ownerUrl = 'https://graph.microsoft.com/v1.0/me/memberOf';
+
+        $requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
+        try {
+            $groupResource = $requestFactory->request(
+                $ownerUrl,
+                'GET',
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $this->userLookupEvent->getAccessToken(),
+                    ],
+                ]
+            );
+            $body = $groupResource->getBody()->getContents();
+            $groupSettings = json_decode($body);
+
+            return array_map(function ($group) {
+                return $group->id;
+            }, $groupSettings?->value ?? []);
+        } catch (\Exception) {
+        }
+        return [];
     }
 }

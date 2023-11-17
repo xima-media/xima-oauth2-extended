@@ -14,6 +14,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
 use Xima\XimaOauth2Extended\ResourceResolver\ProfileImageResolverInterface;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
+use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
 
 class BackendUserFactory
 {
@@ -37,6 +38,7 @@ class BackendUserFactory
     {
         $this->resolver->updateBackendUser($typo3User);
         $this->updateProfileImage($typo3User);
+        $this->updateUserGroups($typo3User);
 
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('be_users');
         foreach ($typo3User as $fieldName => $value) {
@@ -85,6 +87,41 @@ class BackendUserFactory
         $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
         return $qb;
+    }
+
+    private function updateUserGroups(array &$typo3User): void
+    {
+        if ($this->resolver instanceof UserGroupResolverInterface) {
+            $groupIds = $this->resolver->resolveUserGroups();
+
+            if (!count($groupIds)) {
+                return;
+            }
+
+            $qb = $this->getQueryBuilder('be_groups');
+            $groupIdResults = $qb->select('g.uid')
+                ->distinct()
+                ->from('be_groups', 'g')
+                ->leftJoin('g', 'be_users', 'u', $qb->expr()->inSet('g.uid', $qb->quoteIdentifier('u.usergroup')))
+                ->where(
+                    $qb->expr()->or(
+                        $qb->expr()->in('g.oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)),
+                        $qb->expr()->and(
+                            $qb->expr()->eq('g.oauth2_id', $qb->createNamedParameter('')),
+                            $qb->expr()->eq('u.uid', $qb->createNamedParameter($typo3User['uid'], \PDO::PARAM_INT))
+                        )
+                    )
+                )
+                ->execute()
+                ->fetchAllAssociative();
+
+            $groupIds = array_map(function ($groupResult) {
+                return $groupResult['uid'];
+            }, $groupIdResults);
+            $groupIdsString = implode(',', $groupIds);
+
+            $typo3User['usergroup'] = $groupIdsString;
+        }
     }
 
     public function registerRemoteUser(): ?array
