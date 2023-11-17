@@ -155,6 +155,9 @@ class BackendUserFactory
         // download profile picture
         $this->updateProfileImage($userRecord);
 
+        // update user groups
+        $this->updateUserGroups($userRecord);
+
         try {
             if ($this->persistIdentityForUser($userRecord)) {
                 return $userRecord;
