@@ -4,7 +4,7 @@ namespace Xima\XimaOauth2Extended\ResourceResolver;
 
 final class ResolverOptions
 {
-    /** @var class-string  */
+    /** @var class-string */
     public string $resolverClassName;
 
     public bool $createBackendUser = false;
@@ -27,6 +27,8 @@ final class ResolverOptions
 
     public string $imageStorageFrontendIdentifier = '';
 
+    public string $defaultBackendLanguage = '';
+
     /**
      * @param array<string, mixed> $extConf
      */
@@ -44,6 +46,7 @@ final class ResolverOptions
         $conf->requireFrontendUsergroup = $extConf['requireFrontendUsergroup'] ?? false;
         $conf->imageStorageBackendIdentifier = $extConf['imageStorageBackendIdentifier'] ?? '1:/user_upload/oauth';
         $conf->imageStorageFrontendIdentifier = $extConf['imageStorageFrontendIdentifier'] ?? '1:/user_upload/oauth';
+        $conf->defaultBackendLanguage = $extConf['defaultBackendLanguage'] ?? 'default';
 
         return $conf;
     }
