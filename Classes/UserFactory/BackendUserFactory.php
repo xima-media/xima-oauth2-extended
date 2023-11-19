@@ -13,42 +13,17 @@ use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
 use Xima\XimaOauth2Extended\ResourceResolver\ProfileImageResolverInterface;
-use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
 use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
 
-class BackendUserFactory
+class BackendUserFactory extends AbstractUserFactory
 {
-    protected ResourceResolverInterface $resolver;
-
-    protected string $providerId = '';
-
-    protected array $extendedProviderConfiguration = [];
-
-    public function __construct(
-        ResourceResolverInterface $resolver,
-        string $providerId,
-        array $extendedProviderConfiguration
-    ) {
-        $this->resolver = $resolver;
-        $this->providerId = $providerId;
-        $this->extendedProviderConfiguration = $extendedProviderConfiguration;
-    }
 
     public function updateTypo3User(array $typo3User): array
     {
         $this->resolver->updateBackendUser($typo3User);
         $this->updateProfileImage($typo3User);
         $this->updateUserGroups($typo3User);
-
-        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('be_users');
-        foreach ($typo3User as $fieldName => $value) {
-            $qb->set($fieldName, $value);
-        }
-        $qb->update('be_users')
-            ->where(
-                $qb->expr()->eq('uid', $qb->createNamedParameter($typo3User['uid'], \PDO::PARAM_INT))
-            )
-            ->executeStatement();
+        $this->saveUpdatedTypo3User($typo3User);
 
         return $typo3User;
     }
@@ -73,8 +48,7 @@ class BackendUserFactory
             return;
         }
 
-        $extendedProviderConfiguration = $this->extendedProviderConfiguration[$this->providerId] ?? [];
-        $imageUtility = new ImageUserFactory($this->resolver, $extendedProviderConfiguration);
+        $imageUtility = new ImageUserFactory($this->resolver, $this->resolverOptions->imageStorageBackendIdentifier);
         $success = $imageUtility->addProfileImageForBackendUser($userRecord['uid']);
         if ($success) {
             $userRecord['avatar'] = 1;
@@ -91,48 +65,57 @@ class BackendUserFactory
 
     private function updateUserGroups(array &$typo3User): void
     {
-        if ($this->resolver instanceof UserGroupResolverInterface) {
-            $groupIds = $this->resolver->resolveUserGroups();
+        $groupIds = $this->getRemoteGroupIdsCached();
 
-            if (!count($groupIds)) {
-                return;
-            }
-
-            $qb = $this->getQueryBuilder('be_groups');
-            $groupIdResults = $qb->select('g.uid')
-                ->distinct()
-                ->from('be_groups', 'g')
-                ->leftJoin('g', 'be_users', 'u', $qb->expr()->inSet('g.uid', $qb->quoteIdentifier('u.usergroup')))
-                ->where(
-                    $qb->expr()->or(
-                        $qb->expr()->in('g.oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)),
-                        $qb->expr()->and(
-                            $qb->expr()->eq('g.oauth2_id', $qb->createNamedParameter('')),
-                            $qb->expr()->eq('u.uid', $qb->createNamedParameter($typo3User['uid'], \PDO::PARAM_INT))
-                        )
+        $qb = $this->getQueryBuilder('be_groups');
+        $groupIdResults = $qb->select('g.uid')
+            ->distinct()
+            ->from('be_groups', 'g')
+            ->leftJoin('g', 'be_users', 'u', $qb->expr()->inSet('g.uid', $qb->quoteIdentifier('u.usergroup')))
+            ->where(
+                $qb->expr()->or(
+                    $qb->expr()->in('g.oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)),
+                    $qb->expr()->and(
+                        $qb->expr()->eq('g.oauth2_id', $qb->createNamedParameter('')),
+                        $qb->expr()->eq('u.uid', $qb->createNamedParameter($typo3User['uid'], \PDO::PARAM_INT))
                     )
                 )
-                ->execute()
-                ->fetchAllAssociative();
+            )
+            ->execute()
+            ->fetchAllAssociative();
 
-            $groupIds = array_map(function ($groupResult) {
-                return $groupResult['uid'];
-            }, $groupIdResults);
-            $groupIdsString = implode(',', $groupIds);
+        $groupIds = array_map(function ($groupResult) {
+            return $groupResult['uid'];
+        }, $groupIdResults);
+        $groupIdsString = implode(',', $groupIds);
 
-            $typo3User['usergroup'] = $groupIdsString;
+        $typo3User['usergroup'] = $groupIdsString;
+    }
+
+    private function saveUpdatedTypo3User(array $typo3User): void
+    {
+        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('be_users');
+        foreach ($typo3User as $fieldName => $value) {
+            $qb->set($fieldName, $value);
         }
+        $qb->update('be_users')
+            ->where(
+                $qb->expr()->eq('uid', $qb->createNamedParameter($typo3User['uid'], \PDO::PARAM_INT))
+            )
+            ->executeStatement();
     }
 
     public function registerRemoteUser(): ?array
     {
-        $extendedProviderConfiguration = $this->extendedProviderConfiguration[$this->providerId] ?? [];
-        $doCreateNewUser = isset($extendedProviderConfiguration['createBackendUser']) && $extendedProviderConfiguration['createBackendUser'];
-
-        // find or optionally create
         $userRecord = $this->findUserByUsernameOrEmail();
-        if (!is_array($userRecord)) {
-            if ($doCreateNewUser) {
+
+        $userToLinkNotFound = !is_array($userRecord);
+        $doCreateNewUser = $this->resolverOptions->createBackendUser;
+        $groupRestrictionIsMet = !$this->resolverOptions->requireBackendUsergroup || $this->checkBackendGroupRestriction();
+
+        // check if user should be created
+        if ($userToLinkNotFound) {
+            if ($doCreateNewUser && $groupRestrictionIsMet) {
                 $userRecord = $this->createBasicBackendUser();
             } else {
                 return null;
@@ -158,11 +141,14 @@ class BackendUserFactory
         // update user groups
         $this->updateUserGroups($userRecord);
 
+        // save updated user
+        $this->saveUpdatedTypo3User($userRecord);
+
         try {
             if ($this->persistIdentityForUser($userRecord)) {
                 return $userRecord;
             }
-        } catch (Exception $e) {
+        } catch (Exception) {
         }
 
         return null;
@@ -203,6 +189,20 @@ class BackendUserFactory
         return $user ?: null;
     }
 
+    protected function checkBackendGroupRestriction(): bool
+    {
+        $groupIds = $this->getRemoteGroupIdsCached();
+
+        $qb = $this->getQueryBuilder('be_groups');
+        $existingGroups = $qb->count('uid')
+            ->from('be_groups')
+            ->where($qb->expr()->in('oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)))
+            ->execute()
+            ->fetchOne();
+
+        return (bool)$existingGroups;
+    }
+
     /**
      * @throws InvalidPasswordHashException
      */
@@ -220,7 +220,6 @@ class BackendUserFactory
     ])] public function createBasicBackendUser(): array
     {
         $saltingInstance = GeneralUtility::makeInstance(PasswordHashFactory::class)->getDefaultHashInstance('BE');
-        $defaultUserGroup = $this->extendedProviderConfiguration['defaultBackendUsergroup'] ?? '';
 
         return [
             'crdate' => time(),
@@ -232,7 +231,7 @@ class BackendUserFactory
             'password' => $saltingInstance->getHashedPassword(md5(uniqid('', true))),
             'realName' => '',
             'username' => '',
-            'usergroup' => $defaultUserGroup,
+            'usergroup' => $this->resolverOptions->defaultBackendUsergroup,
         ];
     }
 

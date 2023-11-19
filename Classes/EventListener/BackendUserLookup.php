@@ -10,6 +10,7 @@ use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Events\BackendUserLookupEvent;
 use Xima\XimaOauth2Extended\Exception\IdentityResolverException;
+use Xima\XimaOauth2Extended\ResourceResolver\ResolverOptions;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
 use Xima\XimaOauth2Extended\UserFactory\BackendUserFactory;
 
@@ -34,20 +35,20 @@ class BackendUserLookup
 
         $providerId = $event->getProviderId();
         $extendedProviderConfiguration = $this->extensionConfiguration->get('xima_oauth2_extended', 'oauth2_client_providers') ?? [];
-        $resolverClass = $extendedProviderConfiguration[$providerId]['resolverClassName'] ?? '';
-        if (!$resolverClass) {
+        $resolverOptions = ResolverOptions::createFromExtensionConfiguration($extendedProviderConfiguration[$providerId] ?? []);
+        if (!$resolverOptions->resolverClassName) {
             return;
         }
 
         // create resolver
-        $resolver = GeneralUtility::makeInstance($resolverClass, $event);
+        $resolver = GeneralUtility::makeInstance($resolverOptions->resolverClassName, $event);
         if (!$resolver instanceof ResourceResolverInterface) {
-            $message = 'Class ' . $resolverClass . ' musst implement interface ' . ResourceResolverInterface::class;
+            $message = 'Class ' . $resolverOptions->resolverClassName . ' musst implement interface ' . ResourceResolverInterface::class;
             throw new IdentityResolverException($message, 1683016777);
         }
 
         // create/link user or update
-        $userFactory = new BackendUserFactory($resolver, $providerId, $extendedProviderConfiguration);
+        $userFactory = new BackendUserFactory($resolver, $providerId, $resolverOptions);
         $typo3User = $event->getTypo3User();
         if ($typo3User === null) {
             $this->logger->info('Register remote user from provider "' . $event->getProviderId() . '" (remote id: ' . $event->getRemoteUser()->getId() . ')');

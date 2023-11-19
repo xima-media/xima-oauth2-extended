@@ -12,14 +12,13 @@ final class ImageUserFactory
 {
     public function __construct(
         private ProfileImageResolverInterface $resolver,
-        private array $extendedProviderConfiguration
+        private readonly string $fileStorageIdentifier
     ) {
     }
 
     public function addProfileImageForBackendUser(int $beUserUid): bool
     {
-        $fileStorageIdentifier = $this->extendedProviderConfiguration['imageStorageBackendIdentifier'] ?? '';
-        $fileStorageUid = self::getFileStorageUidFromIdentifier($fileStorageIdentifier);
+        $fileStorageUid = self::getFileStorageUidFromIdentifier($this->fileStorageIdentifier);
         if ($fileStorageUid === null) {
             return false;
         }
@@ -30,7 +29,7 @@ final class ImageUserFactory
         }
 
         try {
-            $fileIdentifier = $this->writeFile($imageContent, $fileStorageIdentifier);
+            $fileIdentifier = $this->writeFile($imageContent, $this->fileStorageIdentifier);
             $sysFileUid = $this->createSysFile($fileIdentifier, $fileStorageUid);
             self::createSysFileReferenceForUser($sysFileUid, 'be_users', 'avatar', $beUserUid);
         } catch (\Exception) {
