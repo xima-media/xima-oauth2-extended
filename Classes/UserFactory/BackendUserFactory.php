@@ -22,6 +22,7 @@ class BackendUserFactory extends AbstractUserFactory
     {
         $this->resolver->updateBackendUser($typo3User);
         $this->updateProfileImage($typo3User);
+        $this->createUserGroups();
         $this->updateUserGroups($typo3User);
         $this->saveUpdatedTypo3User($typo3User);
 
@@ -61,6 +62,42 @@ class BackendUserFactory extends AbstractUserFactory
         $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
         return $qb;
+    }
+
+    private function createUserGroups(): void
+    {
+        if (!$this->resolverOptions->createBackendUsergroups || !$this->resolver instanceof UserGroupResolverInterface) {
+            return;
+        }
+
+        $groupIds = $this->getRemoteGroupIdsCached();
+        if (!count($groupIds)) {
+            return;
+        }
+
+        $qb = $this->getQueryBuilder('be_groups');
+        $existingGroupsResult = $qb->select('oauth2_id')
+            ->from('be_groups')
+            ->where($qb->expr()->in('oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)))
+            ->execute()
+            ->fetchAllAssociative();
+
+        $groupIdsToCreate = array_diff($groupIds, array_column($existingGroupsResult, 'oauth2_id'));
+        if (!count($groupIdsToCreate)) {
+            return;
+        }
+
+        $insertValues = array_map(function ($oauthId) {
+            return [time(), time(), $oauthId, $oauthId];
+        }, $groupIdsToCreate);
+
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('be_groups');
+        $connection->bulkInsert(
+            'be_groups',
+            $insertValues,
+            ['crdate', 'tstamp', 'title', 'oauth2_id'],
+            [\PDO::PARAM_INT, \PDO::PARAM_INT, \PDO::PARAM_STR, \PDO::PARAM_STR]
+        );
     }
 
     private function updateUserGroups(array &$typo3User): void
@@ -137,6 +174,9 @@ class BackendUserFactory extends AbstractUserFactory
 
         // download profile picture
         $this->updateProfileImage($userRecord);
+
+        // create user groups
+        $this->createUserGroups();
 
         // update user groups
         $this->updateUserGroups($userRecord);
