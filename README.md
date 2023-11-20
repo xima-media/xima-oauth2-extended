@@ -59,11 +59,12 @@ register it in the extension configuration:
 
 ## Available resource resolver
 
-To create and update TYPO3 users via OAuth2 login, a resource resolver are used
-for data mapping. This extension ships
-a `GenericResolver` which should work with most OAuth resources. Since every
-endpoint has its own API for extended user information, the default resolver
-cannot implement all features:
+This TYPO3 extension provides a resource resolver to facilitate the creation and
+updating of TYPO3 users through OAuth2 login. The resource resolver serves as a
+mapping tool for data retrieval from various OAuth resources. While the default
+resolver, GenericResolver, covers most OAuth endpoints, each endpoint's unique
+API for extended user information might require specific handling, leading to
+variations in features.
 
 | Resolver                  | User Creation | Profile picture | Group Creation |
 |---------------------------|:-------------:|:---------------:|:--------------:|
@@ -71,17 +72,24 @@ cannot implement all features:
 | MicrosoftResourceResolver |       ✅       |   ✅ (BE only)   |  ✅ (BE only)   |
 | GitlabResourceResolver    |       ✅       |       🚫        |       🚫       |
 
-## Extended resource provider options
+## Extended resource resolver options
 
-| Option                           | Description                                                                   | Default                          |
-|----------------------------------|-------------------------------------------------------------------------------|----------------------------------|
-| `resolverClassName`              | Class name of the resource resolver. See above for list of available resolver | `GenericResourceResolver::class` |
-| `createBackendUser`              | If no existing user can be authenticated, create a new backend user           | `false`                          |
-| `createFrontendUser`             | If no existing user can be authenticated, create a new frontend user          | `false`                          |
-| `defaultBackendUsergroup`        | List of be_group UIDs the created user will be assigned to                    | ` `                              |
-| `defaultFrontendUsergroup`       | List of fe_group UIDs the created user will be assigned to                    | ` `                              |
-| `imageStorageBackendIdentifier`  | Storage identifier for downloaded backend user profile images                 | `1:/user_upload/oauth`           |
-| `imageStorageFrontendIdentifier` | Storage identifier for downloaded frontend user profile images                | `1:/user_upload/oauth`           |
+The extension provides customizable options to tailor the resolver's behavior:
+
+| Option                           | Description                                                                                | Default                          |
+|----------------------------------|--------------------------------------------------------------------------------------------|----------------------------------|
+| `resolverClassName`              | Class name of the resource resolver. See above for list of available resolver              | `GenericResourceResolver::class` |
+| `createBackendUser`              | If set, create a new TYPO3 backend user if no existing user is authenticated               | `false`                          |
+| `createFrontendUser`             | If set, create a new TYPO3 frontend user if no existing user is authenticated              | `false`                          |
+| `defaultBackendUsergroup`        | List of be_group UIDs the created user will be assigned to                                 | ` `                              |
+| `defaultFrontendUsergroup`       | List of fe_group UIDs the created user will be assigned to                                 | ` `                              |
+| `createBackendUsergroups`        | If set, create backend user groups based on those of the remote user                       | `false`                          |
+| `createFrontendUsergroups`       | If set, create frontend user groups based on those of the remote user                      | `false`                          |
+| `requireBackendUsergroup`        | If set, require the remote user to be in at least one user group with matching `oauth2_id` | `false`                          |
+| `requireFrontendUsergroup`       | If set, require the remote user to be in at least one user group with matching `oauth2_id` | `false`                          |
+| `imageStorageBackendIdentifier`  | Storage identifier for downloaded backend user profile images                              | `1:/user_upload/oauth`           |
+| `imageStorageFrontendIdentifier` | Storage identifier for downloaded frontend user profile images                             | `1:/user_upload/oauth`           |
+| `defaultBackendLanguage`         | Language identifier for created backend users                                              | `default`                        |
 
 ## FAQ
 
