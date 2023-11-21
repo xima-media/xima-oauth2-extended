@@ -2,7 +2,6 @@
 
 namespace Xima\XimaOauth2Extended\UserFactory;
 
-use Xima\XimaOauth2Extended\ResourceResolver\ResolverOptions;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
 use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
 
@@ -14,8 +13,7 @@ abstract class AbstractUserFactory
 
     public function __construct(
         protected ResourceResolverInterface $resolver,
-        protected string $providerId,
-        protected ResolverOptions $resolverOptions
+        protected string $providerId
     ) {
     }
 

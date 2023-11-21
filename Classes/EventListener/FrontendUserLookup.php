@@ -13,6 +13,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Events\FrontendUserLookupEvent;
 use Xima\XimaOauth2Extended\Exception\IdentityResolverException;
 use Xima\XimaOauth2Extended\Exception\OAuth2ConfigurationException;
+use Xima\XimaOauth2Extended\ResourceResolver\ResolverOptions;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
 use Xima\XimaOauth2Extended\UserFactory\FrontendUserFactory;
 
@@ -39,15 +40,15 @@ class FrontendUserLookup
 
         $providerId = $event->getProviderId();
         $extendedProviderConfiguration = $this->extensionConfiguration->get('xima_oauth2_extended', 'oauth2_client_providers') ?? [];
-        $resolverClass = $extendedProviderConfiguration[$providerId]['resolverClassName'] ?? '';
-        if (!$resolverClass) {
+        $resolverOptions = ResolverOptions::createFromExtensionConfiguration($extendedProviderConfiguration[$providerId] ?? []);
+        if (!$resolverOptions->resolverClassName) {
             return;
         }
 
         // create resolver
-        $resolver = GeneralUtility::makeInstance($resolverClass, $event);
+        $resolver = GeneralUtility::makeInstance($resolverOptions->resolverClassName, $event, $resolverOptions);
         if (!$resolver instanceof ResourceResolverInterface) {
-            $message = 'Class ' . $resolverClass . ' musst implement interface ' . ResourceResolverInterface::class;
+            $message = 'Class ' . $resolverOptions->resolverClassName . ' musst implement interface ' . ResourceResolverInterface::class;
             throw new IdentityResolverException($message, 1683016777);
         }
 

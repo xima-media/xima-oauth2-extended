@@ -49,7 +49,7 @@ class BackendUserFactory extends AbstractUserFactory
             return;
         }
 
-        $imageUtility = new ImageUserFactory($this->resolver, $this->resolverOptions->imageStorageBackendIdentifier);
+        $imageUtility = new ImageUserFactory($this->resolver, $this->resolver->getOptions()->imageStorageBackendIdentifier);
         $success = $imageUtility->addProfileImageForBackendUser($userRecord['uid']);
         if ($success) {
             $userRecord['avatar'] = 1;
@@ -66,7 +66,7 @@ class BackendUserFactory extends AbstractUserFactory
 
     private function createUserGroups(): void
     {
-        if (!$this->resolverOptions->createBackendUsergroups || !$this->resolver instanceof UserGroupResolverInterface) {
+        if (!$this->resolver->getOptions()->createBackendUsergroups || !$this->resolver instanceof UserGroupResolverInterface) {
             return;
         }
 
@@ -147,8 +147,8 @@ class BackendUserFactory extends AbstractUserFactory
         $userRecord = $this->findUserByUsernameOrEmail();
 
         $userToLinkNotFound = !is_array($userRecord);
-        $doCreateNewUser = $this->resolverOptions->createBackendUser;
-        $groupRestrictionIsMet = !$this->resolverOptions->requireBackendUsergroup || $this->checkBackendGroupRestriction();
+        $doCreateNewUser = $this->resolver->getOptions()->createBackendUser;
+        $groupRestrictionIsMet = !$this->resolver->getOptions()->requireBackendUsergroup || $this->checkBackendGroupRestriction();
 
         // check if user should be created
         if ($userToLinkNotFound) {
@@ -272,8 +272,8 @@ class BackendUserFactory extends AbstractUserFactory
             'password' => $saltingInstance->getHashedPassword(md5(uniqid('', true))),
             'realName' => '',
             'username' => '',
-            'usergroup' => $this->resolverOptions->defaultBackendUsergroup,
-            'lang' => $this->resolverOptions->defaultBackendLanguage,
+            'usergroup' => $this->resolver->getOptions()->defaultBackendUsergroup,
+            'lang' => $this->resolver->getOptions()->defaultBackendLanguage,
         ];
     }
 

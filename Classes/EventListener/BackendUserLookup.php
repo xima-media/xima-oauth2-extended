@@ -41,14 +41,14 @@ class BackendUserLookup
         }
 
         // create resolver
-        $resolver = GeneralUtility::makeInstance($resolverOptions->resolverClassName, $event);
+        $resolver = GeneralUtility::makeInstance($resolverOptions->resolverClassName, $event, $resolverOptions);
         if (!$resolver instanceof ResourceResolverInterface) {
             $message = 'Class ' . $resolverOptions->resolverClassName . ' musst implement interface ' . ResourceResolverInterface::class;
             throw new IdentityResolverException($message, 1683016777);
         }
 
         // create/link user or update
-        $userFactory = new BackendUserFactory($resolver, $providerId, $resolverOptions);
+        $userFactory = new BackendUserFactory($resolver, $providerId);
         $typo3User = $event->getTypo3User();
         if ($typo3User === null) {
             $this->logger->info('Register remote user from provider "' . $event->getProviderId() . '" (remote id: ' . $event->getRemoteUser()->getId() . ')');
