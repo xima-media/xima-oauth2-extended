@@ -157,6 +157,7 @@ final class ImageUserFactory
                 'uid_foreign' => $uid,
                 'tablenames' => $tableName,
                 'fieldname' => $fieldName,
+                'table_local' => 'sys_file',
             ])
             ->execute();
     }
