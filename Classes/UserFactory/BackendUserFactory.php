@@ -24,6 +24,7 @@ class BackendUserFactory extends AbstractUserFactory
         $this->updateProfileImage($typo3User);
         $this->createUserGroups();
         $this->updateUserGroups($typo3User);
+        $this->updateAdmin($typo3User);
         $this->saveUpdatedTypo3User($typo3User);
 
         return $typo3User;
@@ -49,7 +50,8 @@ class BackendUserFactory extends AbstractUserFactory
             return;
         }
 
-        $imageUtility = new ImageUserFactory($this->resolver, $this->resolver->getOptions()->imageStorageBackendIdentifier);
+        $imageUtility = new ImageUserFactory($this->resolver,
+            $this->resolver->getOptions()->imageStorageBackendIdentifier);
         $success = $imageUtility->addProfileImageForBackendUser($userRecord['uid']);
         if ($success) {
             $userRecord['avatar'] = 1;
@@ -129,6 +131,25 @@ class BackendUserFactory extends AbstractUserFactory
         $typo3User['usergroup'] = $groupIdsString;
     }
 
+    private function updateAdmin(array &$typo3User): void
+    {
+        $adminGroupSettings = GeneralUtility::trimExplode(',', $this->resolver->getOptions()->defaultBackendAdminGroups,
+            true);
+        if (!count($adminGroupSettings)) {
+            return;
+        }
+
+        if (in_array('all', $adminGroupSettings, true)) {
+            $typo3User['admin'] = 1;
+            return;
+        }
+
+        $userGroups = $this->getRemoteGroupIdsCached();
+        if (count(array_intersect($adminGroupSettings, $userGroups))) {
+            $typo3User['admin'] = 1;
+        }
+    }
+
     private function saveUpdatedTypo3User(array $typo3User): void
     {
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('be_users');
@@ -180,6 +201,9 @@ class BackendUserFactory extends AbstractUserFactory
 
         // update user groups
         $this->updateUserGroups($userRecord);
+
+        // update admin field
+        $this->updateAdmin($userRecord);
 
         // save updated user
         $this->saveUpdatedTypo3User($userRecord);

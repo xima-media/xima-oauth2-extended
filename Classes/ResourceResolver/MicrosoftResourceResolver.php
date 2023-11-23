@@ -20,7 +20,6 @@ class MicrosoftResourceResolver extends GenericResourceResolver implements Profi
         }
 
         $beUser['disable'] = 0;
-        $beUser['admin'] = 1;
 
         if (!$beUser['realName']) {
             $beUser['realName'] = $remoteUser['name'];

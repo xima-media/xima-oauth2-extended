@@ -29,6 +29,8 @@ final class ResolverOptions
 
     public string $defaultBackendLanguage = '';
 
+    public string $defaultBackendAdminGroups = '';
+
     /**
      * @param array<string, mixed> $extConf
      */
@@ -47,6 +49,7 @@ final class ResolverOptions
         $conf->imageStorageBackendIdentifier = $extConf['imageStorageBackendIdentifier'] ?? '1:/user_upload/oauth';
         $conf->imageStorageFrontendIdentifier = $extConf['imageStorageFrontendIdentifier'] ?? '1:/user_upload/oauth';
         $conf->defaultBackendLanguage = $extConf['defaultBackendLanguage'] ?? 'default';
+        $conf->defaultBackendAdminGroups = $extConf['defaultBackendAdminGroups'] ?? '';
 
         return $conf;
     }
