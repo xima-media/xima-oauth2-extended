@@ -6,6 +6,7 @@ use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
+use TYPO3\CMS\Core\Utility\VersionNumberUtility;
 use Xima\XimaOauth2Extended\ResourceResolver\ProfileImageResolverInterface;
 
 final class ImageUserFactory
@@ -119,6 +120,7 @@ final class ImageUserFactory
         $insertValues = [
             'tstamp' => $now,
             'type' => 2,
+            'name' => self::getFileNameFromIdentifier($fileIdentifier),
             'identifier' => $fileIdentifier,
             'creation_date' => $now,
             'modification_date' => $now,
@@ -140,6 +142,14 @@ final class ImageUserFactory
         return $result[0];
     }
 
+    private static function getFileNameFromIdentifier(string $identifier): string
+    {
+        $identifierParts = GeneralUtility::trimExplode('/', $identifier);
+        $fileName = array_pop($identifierParts) ?? '';
+        $withoutExtensionParts = GeneralUtility::trimExplode('.', $fileName);
+        return $withoutExtensionParts[0];
+    }
+
     private static function createSysFileReferenceForUser(
         int $sysFileUid,
         string $tableName,
@@ -148,17 +158,23 @@ final class ImageUserFactory
     ): void {
         $now = (new \DateTime())->getTimestamp();
 
+        $insertValues = [
+            'tstamp' => $now,
+            'crdate' => $now,
+            'uid_local' => $sysFileUid,
+            'uid_foreign' => $uid,
+            'tablenames' => $tableName,
+            'fieldname' => $fieldName,
+        ];
+
+        $version = VersionNumberUtility::convertVersionStringToArray(VersionNumberUtility::getNumericTypo3Version());
+        if ($version['version_main'] < 12) {
+            $insertValues['table_local'] = 'sys_file';
+        }
+
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_reference');
         $qb->insert('sys_file_reference')
-            ->values([
-                'tstamp' => $now,
-                'crdate' => $now,
-                'uid_local' => $sysFileUid,
-                'uid_foreign' => $uid,
-                'tablenames' => $tableName,
-                'fieldname' => $fieldName,
-                'table_local' => 'sys_file',
-            ])
+            ->values($insertValues)
             ->execute();
     }
 }
