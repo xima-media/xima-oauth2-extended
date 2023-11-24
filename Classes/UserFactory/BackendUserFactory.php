@@ -17,7 +17,6 @@ use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
 
 class BackendUserFactory extends AbstractUserFactory
 {
-
     public function updateTypo3User(array $typo3User): array
     {
         $this->resolver->updateBackendUser($typo3User);
@@ -50,8 +49,10 @@ class BackendUserFactory extends AbstractUserFactory
             return;
         }
 
-        $imageUtility = new ImageUserFactory($this->resolver,
-            $this->resolver->getOptions()->imageStorageBackendIdentifier);
+        $imageUtility = new ImageUserFactory(
+            $this->resolver,
+            $this->resolver->getOptions()->imageStorageBackendIdentifier
+        );
         $success = $imageUtility->addProfileImageForBackendUser($userRecord['uid']);
         if ($success) {
             $userRecord['avatar'] = 1;
@@ -133,8 +134,11 @@ class BackendUserFactory extends AbstractUserFactory
 
     private function updateAdmin(array &$typo3User): void
     {
-        $adminGroupSettings = GeneralUtility::trimExplode(',', $this->resolver->getOptions()->defaultBackendAdminGroups,
-            true);
+        $adminGroupSettings = GeneralUtility::trimExplode(
+            ',',
+            $this->resolver->getOptions()->defaultBackendAdminGroups,
+            true
+        );
         if (!count($adminGroupSettings)) {
             return;
         }

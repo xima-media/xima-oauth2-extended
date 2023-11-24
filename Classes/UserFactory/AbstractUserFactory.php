@@ -7,7 +7,6 @@ use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
 
 abstract class AbstractUserFactory
 {
-
     /** @var string[]|null */
     protected ?array $remoteGroupIds = null;
 
