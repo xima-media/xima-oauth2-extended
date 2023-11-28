@@ -12,11 +12,11 @@ class MicrosoftResourceResolver extends GenericResourceResolver implements Profi
         $remoteUser = $this->getRemoteUser()->toArray();
 
         if (!$beUser['username'] && $remoteUser['email']) {
-            $beUser['username'] = $remoteUser['email'];
+            $beUser['username'] = strtolower($remoteUser['email']);
         }
 
         if ($remoteUser['email']) {
-            $beUser['email'] = $remoteUser['email'];
+            $beUser['email'] = strtolower($remoteUser['email']);
         }
 
         $beUser['disable'] = 0;
@@ -56,11 +56,11 @@ class MicrosoftResourceResolver extends GenericResourceResolver implements Profi
         $remoteUser = $this->getRemoteUser()->toArray();
 
         if (!$feUser['username'] && $remoteUser['email']) {
-            $feUser['username'] = $remoteUser['email'];
+            $feUser['username'] = strtolower($remoteUser['email']);
         }
 
         if ($remoteUser['email']) {
-            $feUser['email'] = $remoteUser['email'];
+            $feUser['email'] = strtolower($remoteUser['email']);
         }
 
         $feUser['disable'] = 0;

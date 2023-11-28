@@ -6,7 +6,10 @@ class GenericResourceResolver extends AbstractResourceResolver
 {
     public function getIntendedEmail(): ?string
     {
-        return $this->getRemoteUser()->toArray()['email'] ?? null;
+        if ($this->getRemoteUser()->toArray()['email'] ?? false) {
+            return strtolower($this->getRemoteUser()->toArray()['email']);
+        }
+        return null;
     }
 
     public function getIntendedUsername(): ?string
@@ -19,14 +22,14 @@ class GenericResourceResolver extends AbstractResourceResolver
         $remoteUser = $this->getRemoteUser()->toArray();
 
         if (!$beUser['username'] && $remoteUser['email']) {
-            $beUser['username'] = $remoteUser['email'];
+            $beUser['username'] = strtolower($remoteUser['email']);
         }
 
         if ($remoteUser['email']) {
-            $beUser['email'] = $remoteUser['email'];
+            $beUser['email'] = strtolower($remoteUser['email']);
         }
 
-        $beUser['disable'] =  0;
+        $beUser['disable'] = 0;
 
         if (!$beUser['realName']) {
             $beUser['realName'] = $remoteUser['name'];
@@ -38,19 +41,17 @@ class GenericResourceResolver extends AbstractResourceResolver
         $remoteUser = $this->getRemoteUser()->toArray();
 
         if (!$feUser['username'] && $remoteUser['email']) {
-            $feUser['username'] = $remoteUser['email'];
+            $feUser['username'] = strtolower($remoteUser['email']);
         }
 
         if ($remoteUser['email']) {
-            $feUser['email'] = $remoteUser['email'];
+            $feUser['email'] = strtolower($remoteUser['email']);
         }
 
-        $feUser['disable'] =  0;
+        $feUser['disable'] = 0;
 
         if (!$feUser['name']) {
             $feUser['name'] = $remoteUser['name'];
         }
-
-        // @TODO: usergroups
     }
 }

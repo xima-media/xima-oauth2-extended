@@ -13,7 +13,7 @@ class GitlabResourceResolver extends GenericResourceResolver
         }
 
         if ($remoteUser['email']) {
-            $beUser['email'] = $remoteUser['email'];
+            $beUser['email'] = strtolower($remoteUser['email']);
         }
 
         if ($remoteUser['state'] === 'active') {
@@ -38,7 +38,7 @@ class GitlabResourceResolver extends GenericResourceResolver
         }
 
         if ($remoteUser['email']) {
-            $feUser['email'] = $remoteUser['email'];
+            $feUser['email'] = strtolower($remoteUser['email']);
         }
 
         if ($remoteUser['state'] === 'active') {
