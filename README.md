@@ -70,6 +70,15 @@ https://domain.de/typo3/login?loginProvider=1616569531&oauth2-provider=yourProvi
 
 Replace `domain.de` and `yourProviderId` with your data!
 
+### Login not working
+
+Make sure `cookieSameSite` is set to `lax`.
+
+```php
+$GLOBALS['TYPO3_CONF_VARS']['BE']['cookieSameSite'] = 'lax';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cookieSameSite'] = 'lax';
+```
+
 ### Order of login provider
 
 To change the order of provider displayed at the `/typo3` login page (OAuth login over classic username/password), use the following snippet:
