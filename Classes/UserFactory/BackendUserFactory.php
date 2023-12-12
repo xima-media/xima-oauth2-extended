@@ -286,6 +286,7 @@ class BackendUserFactory extends AbstractUserFactory
         'password' => 'string',
         'usergroup' => 'string',
         'lang' => 'string',
+        'options' => 'int',
     ])] public function createBasicBackendUser(): array
     {
         $saltingInstance = GeneralUtility::makeInstance(PasswordHashFactory::class)->getDefaultHashInstance('BE');
@@ -302,6 +303,7 @@ class BackendUserFactory extends AbstractUserFactory
             'username' => '',
             'usergroup' => $this->resolver->getOptions()->defaultBackendUsergroup,
             'lang' => $this->resolver->getOptions()->defaultBackendLanguage,
+            'options' => 3,
         ];
     }
 
