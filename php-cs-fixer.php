@@ -30,8 +30,8 @@ if (PHP_SAPI !== 'cli') {
 // Exclude all files and directories from .gitignore
 $finder = (new PhpCsFixer\Finder())
     ->ignoreVCSIgnored(true)
-    ->exclude(realpath(__DIR__ . '/public'))
-    ->in(realpath(__DIR__));
+    ->in(realpath(__DIR__))
+    ->exclude(realpath(__DIR__ . '/public'));
 
 // Return a Code Sniffing configuration using
 // all sniffers needed for PSR-2
