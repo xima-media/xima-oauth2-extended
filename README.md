@@ -9,6 +9,7 @@ for on-the-fly user creation.
 ## New resource provider
 
 * `MicrosoftResourceProvider`
+* `AuthentikResourceProvider`
 
 ## TYPO3 user creation
 
@@ -70,6 +71,7 @@ variations in features.
 |---------------------------|:-------------:|:---------------:|:--------------:|
 | GenericResourceResolver   |       ✅       |       🚫        |       🚫       |
 | MicrosoftResourceResolver |       ✅       |   ✅ (BE only)   |  ✅ (BE only)   |
+| AuthentikResourceResolver |       ✅       |   ✅ (BE only)   |       🚫       |
 | GitlabResourceResolver    |       ✅       |       🚫        |       🚫       |
 
 ## Extended resource resolver options
@@ -94,7 +96,10 @@ The extension provides customizable options to tailor the resolver's behavior:
 
 ## FAQ
 
-### Register Return-URLs
+<details>
+<summary>
+Register Return-URLs
+</summary>
 
 For the backend login the return url looks like this:
 
@@ -103,8 +108,12 @@ https://domain.de/typo3/login?loginProvider=1616569531&oauth2-provider=yourProvi
 ```
 
 Replace `domain.de` and `yourProviderId` with your data!
+</details>
 
-### Login not working
+<details>
+<summary>
+Login not working
+</summary>
 
 Make sure `cookieSameSite` is set to `lax`.
 
@@ -113,7 +122,12 @@ $GLOBALS['TYPO3_CONF_VARS']['BE']['cookieSameSite'] = 'lax';
 $GLOBALS['TYPO3_CONF_VARS']['FE']['cookieSameSite'] = 'lax';
 ```
 
-### Order of login provider
+</details>
+
+<details>
+<summary>
+Order of login provider
+</summary>
 
 To change the order of provider displayed at the `/typo3` login page (OAuth
 login over classic username/password), use the following snippet:
@@ -122,7 +136,12 @@ login over classic username/password), use the following snippet:
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']['1616569531']['sorting'] = 75;
 ```
 
-### Usage in TYPO3v12
+</details>
+
+<details>
+<summary>
+Usage in TYPO3v12
+</summary>
 
 The TYPO3
 extension [waldhacker/ext-oauth2-client](https://github.com/waldhacker/ext-oauth2-client)
@@ -132,14 +151,16 @@ makes the trick. To use it, adjust your `composer.json`:
 
 ```json
 {
-    "repositories": [
-        {
-            "url": "https://github.com/maikschneider/ext-oauth2-client.git",
-            "type": "git"
-        }
-    ],
-    "require": {
-        "waldhacker/typo3-oauth2-client": "dev-feature/v12-compatibility-1"
+  "repositories": [
+    {
+      "url": "https://github.com/maikschneider/ext-oauth2-client.git",
+      "type": "git"
     }
+  ],
+  "require": {
+    "waldhacker/typo3-oauth2-client": "dev-feature/v12-compatibility-1"
+  }
 }
 ```
+
+</details>
