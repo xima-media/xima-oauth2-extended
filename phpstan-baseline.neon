@@ -1,9 +1,29 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceProvider\\\\AuthentikResourceProvider\\:\\:createResourceOwner\\(\\) has parameter \\$response with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceProvider/AuthentikResourceProvider.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceProvider\\\\AuthentikResourceProvider\\:\\:fetchResourceOwnerDetails\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceProvider/AuthentikResourceProvider.php
+
+		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceProvider\\\\MicrosoftResourceProvider\\:\\:createResourceOwner\\(\\) has parameter \\$response with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/ResourceProvider/MicrosoftResourceProvider.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\AuthentikResourceResolver\\:\\:updateBackendUser\\(\\) has parameter \\$beUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/AuthentikResourceResolver.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\AuthentikResourceResolver\\:\\:updateFrontendUser\\(\\) has parameter \\$feUser with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/ResourceResolver/AuthentikResourceResolver.php
 
 		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceResolver\\\\GenericResourceResolver\\:\\:updateBackendUser\\(\\) has parameter \\$beUser with no value type specified in iterable type array\\.$#"

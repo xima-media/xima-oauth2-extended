@@ -2,7 +2,6 @@
 
 namespace Xima\XimaOauth2Extended\ResourceResolver;
 
-use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class AuthentikResourceResolver extends GenericResourceResolver implements ProfileImageResolverInterface
