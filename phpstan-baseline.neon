@@ -131,11 +131,6 @@ parameters:
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
-			message: "#^PHPDoc tag @throws with type Doctrine\\\\DBAL\\\\DBALException\\|Doctrine\\\\DBAL\\\\Driver\\\\Exception is not subtype of Throwable$#"
-			count: 2
-			path: Classes/UserFactory/BackendUserFactory.php
-
-		-
 			message: "#^Attribute class JetBrains\\\\PhpStorm\\\\ArrayShape does not exist\\.$#"
 			count: 1
 			path: Classes/UserFactory/FrontendUserFactory.php
@@ -188,11 +183,6 @@ parameters:
 		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:updateFrontendUserSlug\\(\\) has parameter \\$userRecord with no type specified\\.$#"
 			count: 1
-			path: Classes/UserFactory/FrontendUserFactory.php
-
-		-
-			message: "#^PHPDoc tag @throws with type Doctrine\\\\DBAL\\\\DBALException\\|Doctrine\\\\DBAL\\\\Driver\\\\Exception is not subtype of Throwable$#"
-			count: 2
 			path: Classes/UserFactory/FrontendUserFactory.php
 
 		-
