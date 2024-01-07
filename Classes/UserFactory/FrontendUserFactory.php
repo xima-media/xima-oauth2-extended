@@ -170,7 +170,7 @@ class FrontendUserFactory
             ->executeQuery()
             ->fetchOne();
 
-        if (!$identityCount > 0) {
+        if ((!$identityCount) > 0) {
             return false;
         }
 

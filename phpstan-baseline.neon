@@ -1,16 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Unable to resolve the template type T in call to method static method TYPO3\\\\CMS\\\\Core\\\\Utility\\\\GeneralUtility\\:\\:makeInstance\\(\\)$#"
-			count: 1
-			path: Classes/EventListener/BackendUserLookup.php
-
-		-
-			message: "#^Unable to resolve the template type T in call to method static method TYPO3\\\\CMS\\\\Core\\\\Utility\\\\GeneralUtility\\:\\:makeInstance\\(\\)$#"
-			count: 1
-			path: Classes/EventListener/FrontendUserLookup.php
-
-		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\ResourceProvider\\\\MicrosoftResourceProvider\\:\\:createResourceOwner\\(\\) has parameter \\$response with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/ResourceProvider/MicrosoftResourceProvider.php
@@ -61,18 +51,18 @@ parameters:
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
+			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			count: 2
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
 			message: "#^Cannot call method fetchAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
 			count: 2
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
 			message: "#^Cannot call method fetchOne\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
-			count: 1
-			path: Classes/UserFactory/BackendUserFactory.php
-
-		-
-			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:__construct\\(\\) has parameter \\$extendedProviderConfiguration with no value type specified in iterable type array\\.$#"
-			count: 1
+			count: 2
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
@@ -111,6 +101,16 @@ parameters:
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:saveUpdatedTypo3User\\(\\) has parameter \\$typo3User with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:updateAdmin\\(\\) has parameter \\$typo3User with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:updateProfileImage\\(\\) has parameter \\$userRecord with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/UserFactory/BackendUserFactory.php
@@ -126,7 +126,7 @@ parameters:
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
-			message: "#^Property Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:\\$extendedProviderConfiguration type has no value type specified in iterable type array\\.$#"
+			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:updateUserGroups\\(\\) has parameter \\$typo3User with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/UserFactory/BackendUserFactory.php
 
@@ -197,10 +197,5 @@ parameters:
 
 		-
 			message: "#^Cannot call method fetchFirstColumn\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
-			count: 1
-			path: Classes/UserFactory/ImageUserFactory.php
-
-		-
-			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\ImageUserFactory\\:\\:__construct\\(\\) has parameter \\$extendedProviderConfiguration with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/UserFactory/ImageUserFactory.php

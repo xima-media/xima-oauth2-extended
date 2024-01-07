@@ -6,20 +6,20 @@ use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
+use TYPO3\CMS\Core\Utility\VersionNumberUtility;
 use Xima\XimaOauth2Extended\ResourceResolver\ProfileImageResolverInterface;
 
 final class ImageUserFactory
 {
     public function __construct(
         private ProfileImageResolverInterface $resolver,
-        private array $extendedProviderConfiguration
+        private readonly string $fileStorageIdentifier
     ) {
     }
 
     public function addProfileImageForBackendUser(int $beUserUid): bool
     {
-        $fileStorageIdentifier = $this->extendedProviderConfiguration['imageStorageBackendIdentifier'] ?? '';
-        $fileStorageUid = self::getFileStorageUidFromIdentifier($fileStorageIdentifier);
+        $fileStorageUid = self::getFileStorageUidFromIdentifier($this->fileStorageIdentifier);
         if ($fileStorageUid === null) {
             return false;
         }
@@ -30,7 +30,7 @@ final class ImageUserFactory
         }
 
         try {
-            $fileIdentifier = $this->writeFile($imageContent, $fileStorageIdentifier);
+            $fileIdentifier = $this->writeFile($imageContent, $this->fileStorageIdentifier);
             $sysFileUid = $this->createSysFile($fileIdentifier, $fileStorageUid);
             self::createSysFileReferenceForUser($sysFileUid, 'be_users', 'avatar', $beUserUid);
         } catch (\Exception) {
@@ -120,6 +120,7 @@ final class ImageUserFactory
         $insertValues = [
             'tstamp' => $now,
             'type' => 2,
+            'name' => self::getFileNameFromIdentifier($fileIdentifier),
             'identifier' => $fileIdentifier,
             'creation_date' => $now,
             'modification_date' => $now,
@@ -141,6 +142,14 @@ final class ImageUserFactory
         return $result[0];
     }
 
+    private static function getFileNameFromIdentifier(string $identifier): string
+    {
+        $identifierParts = GeneralUtility::trimExplode('/', $identifier);
+        $fileName = array_pop($identifierParts) ?? '';
+        $withoutExtensionParts = GeneralUtility::trimExplode('.', $fileName);
+        return $withoutExtensionParts[0];
+    }
+
     private static function createSysFileReferenceForUser(
         int $sysFileUid,
         string $tableName,
@@ -149,16 +158,23 @@ final class ImageUserFactory
     ): void {
         $now = (new \DateTime())->getTimestamp();
 
+        $insertValues = [
+            'tstamp' => $now,
+            'crdate' => $now,
+            'uid_local' => $sysFileUid,
+            'uid_foreign' => $uid,
+            'tablenames' => $tableName,
+            'fieldname' => $fieldName,
+        ];
+
+        $version = VersionNumberUtility::convertVersionStringToArray(VersionNumberUtility::getNumericTypo3Version());
+        if ($version['version_main'] < 12) {
+            $insertValues['table_local'] = 'sys_file';
+        }
+
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_reference');
         $qb->insert('sys_file_reference')
-            ->values([
-                'tstamp' => $now,
-                'crdate' => $now,
-                'uid_local' => $sysFileUid,
-                'uid_foreign' => $uid,
-                'tablenames' => $tableName,
-                'fieldname' => $fieldName,
-            ])
+            ->values($insertValues)
             ->execute();
     }
 }

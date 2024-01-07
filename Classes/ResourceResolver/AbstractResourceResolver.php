@@ -13,8 +13,14 @@ abstract class AbstractResourceResolver implements ResourceResolverInterface
         return $this->userLookupEvent->getRemoteUser();
     }
 
+    public function getOptions(): ResolverOptions
+    {
+        return $this->options;
+    }
+
     public function __construct(
-        protected readonly FrontendUserLookupEvent|BackendUserLookupEvent $userLookupEvent
+        protected readonly FrontendUserLookupEvent|BackendUserLookupEvent $userLookupEvent,
+        protected readonly ResolverOptions $options
     ) {
     }
 }
