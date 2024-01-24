@@ -16,8 +16,8 @@ abstract class AbstractUserFactory
     ) {
     }
 
-    /** @return string[] */
-    public function getRemoteGroupIdsCached(): array
+    /** @return string[]|null */
+    public function getRemoteGroupIdsCached(): ?array
     {
         if (!$this->resolver instanceof UserGroupResolverInterface) {
             return [];
