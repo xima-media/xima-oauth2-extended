@@ -70,7 +70,7 @@ class MicrosoftResourceResolver extends GenericResourceResolver implements Profi
         }
     }
 
-    public function resolveUserGroups(): array
+    public function resolveUserGroups(): ?array
     {
         $ownerUrl = 'https://graph.microsoft.com/v1.0/me/memberOf';
 
@@ -88,11 +88,11 @@ class MicrosoftResourceResolver extends GenericResourceResolver implements Profi
             $body = $groupResource->getBody()->getContents();
             $groupSettings = json_decode($body);
 
-            return array_map(function ($group) {
+            return array_map(static function ($group) {
                 return $group->id;
             }, $groupSettings?->value ?? []);
         } catch (\Exception) {
         }
-        return [];
+        return null;
     }
 }

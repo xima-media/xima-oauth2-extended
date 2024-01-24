@@ -20,7 +20,7 @@ abstract class AbstractUserFactory
     public function getRemoteGroupIdsCached(): ?array
     {
         if (!$this->resolver instanceof UserGroupResolverInterface) {
-            return [];
+            return null;
         }
         if ($this->remoteGroupIds === null) {
             $this->remoteGroupIds = $this->resolver->resolveUserGroups();
