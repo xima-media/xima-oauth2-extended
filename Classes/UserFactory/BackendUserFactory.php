@@ -74,7 +74,7 @@ class BackendUserFactory extends AbstractUserFactory
         }
 
         $groupIds = $this->getRemoteGroupIdsCached();
-        if (!count($groupIds)) {
+        if ($groupIds === null || !count($groupIds)) {
             return;
         }
 
@@ -106,6 +106,10 @@ class BackendUserFactory extends AbstractUserFactory
     private function updateUserGroups(array &$typo3User): void
     {
         $groupIds = $this->getRemoteGroupIdsCached();
+
+        if ($groupIds === null) {
+            return;
+        }
 
         $qb = $this->getQueryBuilder('be_groups');
         $groupIdResults = $qb->select('g.uid')
@@ -149,7 +153,7 @@ class BackendUserFactory extends AbstractUserFactory
         }
 
         $userGroups = $this->getRemoteGroupIdsCached();
-        if (count(array_intersect($adminGroupSettings, $userGroups))) {
+        if ($userGroups !== null && count(array_intersect($adminGroupSettings, $userGroups))) {
             $typo3User['admin'] = 1;
         }
     }
@@ -260,6 +264,10 @@ class BackendUserFactory extends AbstractUserFactory
     protected function checkBackendGroupRestriction(): bool
     {
         $groupIds = $this->getRemoteGroupIdsCached();
+
+        if ($groupIds === null) {
+            return false;
+        }
 
         $qb = $this->getQueryBuilder('be_groups');
         $existingGroups = $qb->count('uid')

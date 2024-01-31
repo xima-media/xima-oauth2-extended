@@ -7,7 +7,7 @@ interface UserGroupResolverInterface extends ResourceResolverInterface
     /**
      * Returns list of `oauth2_id`s
      *
-     * @return string[]
+     * @return string[]|null
      */
-    public function resolveUserGroups(): array;
+    public function resolveUserGroups(): ?array;
 }

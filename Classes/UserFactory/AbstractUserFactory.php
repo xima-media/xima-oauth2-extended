@@ -16,11 +16,11 @@ abstract class AbstractUserFactory
     ) {
     }
 
-    /** @return string[] */
-    public function getRemoteGroupIdsCached(): array
+    /** @return string[]|null */
+    public function getRemoteGroupIdsCached(): ?array
     {
         if (!$this->resolver instanceof UserGroupResolverInterface) {
-            return [];
+            return null;
         }
         if ($this->remoteGroupIds === null) {
             $this->remoteGroupIds = $this->resolver->resolveUserGroups();
