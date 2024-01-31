@@ -9,4 +9,4 @@ jobs:
     tests:
         uses: maikschneider/reusable-workflows/.github/workflows/sca.yml@main
         with:
-            php-version: 8.1
+            php-version: 8.2
