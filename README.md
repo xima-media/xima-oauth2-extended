@@ -47,7 +47,7 @@ register it in the extension configuration:
                 'imageStorageBackendIdentifier' => '1:/user_upload/oauth',
             ],
             'secondProviderId' => [
-                'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\GenericResolver::class,
+                'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\GenericResourceResolver::class,
                 'createBackendUser' => true,
                 'createFrontendUser' => true,
                 'defaultBackendUsergroup' => '',
