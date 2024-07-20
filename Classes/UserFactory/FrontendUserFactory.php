@@ -112,6 +112,11 @@ class FrontendUserFactory
 
     protected function updateFrontendUserSlug(&$userRecord): void
     {
+        // abort in case no slug field is defined
+        if (!isset($GLOBALS['TCA']['fe_users']['columns']['slug'])) {
+            return;
+        }
+
         // init SlugHelper for this table
         $fieldConfig = $GLOBALS['TCA']['fe_users']['columns']['slug']['config'];
         /** @var SlugHelper $slugHelper */
