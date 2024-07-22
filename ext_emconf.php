@@ -10,7 +10,7 @@ $EM_CONF[$_EXTKEY] = [
     'state' => 'stable',
     'uploadfolder' => 0,
     'clearCacheOnLoad' => 1,
-    'version' => '2.0.2',
+    'version' => '2.0.3',
     'autoload' => [
         'psr-4' => ['Xima\\XimaOauth2Extended\\' => 'Classes'],
     ],
