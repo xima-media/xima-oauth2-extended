@@ -145,9 +145,7 @@ final class ImageUserFactory
     private static function getFileNameFromIdentifier(string $identifier): string
     {
         $identifierParts = GeneralUtility::trimExplode('/', $identifier);
-        $fileName = array_pop($identifierParts) ?? '';
-        $withoutExtensionParts = GeneralUtility::trimExplode('.', $fileName);
-        return $withoutExtensionParts[0];
+        return array_pop($identifierParts) ?? '';
     }
 
     private static function createSysFileReferenceForUser(
