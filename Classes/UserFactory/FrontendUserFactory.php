@@ -239,7 +239,7 @@ class FrontendUserFactory
     ])] public function createBasicFrontendUser(int $targetPid): array
     {
         $saltingInstance = GeneralUtility::makeInstance(PasswordHashFactory::class)->getDefaultHashInstance('FE');
-        $defaultUserGroup = $this->extendedProviderConfiguration['defaultFrontendUsergroup'] ?? '';
+        $defaultUserGroup = $this->extendedProviderConfiguration[$this->providerId]['defaultFrontendUsergroup'] ?? '';
 
         return [
             'pid' => $targetPid,
