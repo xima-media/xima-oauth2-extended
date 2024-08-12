@@ -3,6 +3,7 @@
 namespace Xima\XimaOauth2Extended\UserFactory;
 
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
@@ -85,8 +86,8 @@ final class ImageUserFactory
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_storage');
         $result = $qb->select('configuration')
             ->from('sys_file_storage')
-            ->where($qb->expr()->eq('uid', $qb->createNamedParameter($uid, \PDO::PARAM_INT)))
-            ->execute()
+            ->where($qb->expr()->eq('uid', $qb->createNamedParameter($uid, Connection::PARAM_INT)))
+            ->executeQuery()
             ->fetchAllAssociative();
 
         $config = GeneralUtility::xml2array($result[0]['configuration']);
@@ -130,13 +131,13 @@ final class ImageUserFactory
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file');
         $qb->insert('sys_file')
             ->values($insertValues)
-            ->execute();
+            ->executeQuery();
 
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file');
         $result = $qb->select('uid')
             ->from('sys_file')
             ->where($qb->expr()->eq('identifier', $qb->createNamedParameter($fileIdentifier)))
-            ->execute()
+            ->executeQuery()
             ->fetchFirstColumn();
 
         return $result[0];
@@ -175,6 +176,6 @@ final class ImageUserFactory
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_reference');
         $qb->insert('sys_file_reference')
             ->values($insertValues)
-            ->execute();
+            ->executeQuery();
     }
 }
