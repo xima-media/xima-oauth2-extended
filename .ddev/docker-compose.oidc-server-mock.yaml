@@ -6,9 +6,6 @@ services:
     # disable healthcheck as it is broken in latest versions: https://github.com/Soluto/oidc-server-mock/issues/151
     healthcheck:
       disable: true
-    # go to http://oauth.ddev.site:4011/
-    ports:
-      - '4011:8080'
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       SERVER_OPTIONS_INLINE: |
@@ -86,6 +83,9 @@ services:
           }
         }
       VIRTUAL_HOST: $DDEV_HOSTNAME
+      HTTP_EXPOSE: 4011:8080
     labels:
         com.ddev.site-name: ${DDEV_SITENAME}
         com.ddev.approot: ${DDEV_APPROOT}
+
+# go to http://xima-oauth2-extended.ddev.site:4011/
