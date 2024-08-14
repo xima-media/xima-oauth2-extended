@@ -31,13 +31,14 @@ services:
           "AutomaticRedirectAfterSignOut": true
         }
       API_SCOPES_INLINE: |
-        - Name: some-app-scope-1
-        - Name: some-app-scope-2
+        - Name: avatar
       API_RESOURCES_INLINE: |
-        - Name: some-app
+        - Name: authentik
           Scopes:
-            - some-app-scope-1
-            - some-app-scope-2
+            - openid
+            - profile
+            - email
+            - avatar
       USERS_CONFIGURATION_INLINE: |
         [
           {
@@ -47,27 +48,17 @@ services:
             "Claims": [
               {
                 "Type": "name",
-                "Value": "Sam Tailor",
+                "Value": "Test User",
                 "ValueType": "string"
               },
               {
                 "Type": "email",
-                "Value": "sam.tailor@gmail.com",
+                "Value": "test.user@example.org",
                 "ValueType": "string"
               },
               {
-                "Type": "some-api-resource-claim",
-                "Value": "Sam's Api Resource Custom Claim",
-                "ValueType": "string"
-              },
-              {
-                "Type": "some-api-scope-claim",
-                "Value": "Sam's Api Scope Custom Claim",
-                "ValueType": "string"
-              },
-              {
-                "Type": "some-identity-resource-claim",
-                "Value": "Sam's Identity Resource Custom Claim",
+                "Type": "avatar",
+                "Value": "Test's Api Resource Custom Claim",
                 "ValueType": "string"
               }
             ]
@@ -76,34 +67,16 @@ services:
       CLIENTS_CONFIGURATION_INLINE: |
         [
           {
-            "ClientId": "implicit-mock-client",
-            "Description": "Client for implicit flow",
-            "AllowedGrantTypes": ["implicit"],
+            "ClientId": "authentik-mock-client",
+            "ClientSecrets": ["authentik-mock-client-secret"],
+            "Description": "Client for authentik credentials flow",
+            "AllowedGrantTypes": ["authorization_code"],
+            "RequirePkce": false,
             "AllowAccessTokensViaBrowser": true,
-            "RedirectUris": ["http://localhost:3000/auth/oidc", "http://localhost:4004/auth/oidc"],
-            "AllowedScopes": ["openid", "profile", "email"],
+            "RedirectUris": ["https://xima-oauth2-extended.ddev.site/typo3/login?loginProvider=1616569531&oauth2-provider=authentik&login_status=login&commandLI=attempt"],
+            "AllowedScopes": ["openid", "profile", "email", "avatar"],
             "IdentityTokenLifetime": 3600,
-            "AccessTokenLifetime": 3600
-          },
-          {
-            "ClientId": "client-credentials-mock-client",
-            "ClientSecrets": ["client-credentials-mock-client-secret"],
-            "Description": "Client for client credentials flow",
-            "AllowedGrantTypes": ["client_credentials"],
-            "AllowedScopes": ["some-app-scope-1"],
-            "ClientClaimsPrefix": "",
-            "Claims": [
-              {
-                "Type": "string_claim",
-                "Value": "string_claim_value",
-                "ValueType": "string"
-              },
-              {
-                "Type": "json_claim",
-                "Value": "[\"value1\", \"value2\"]",
-                "ValueType": "json"
-              }
-            ]
+            "AccessTokenLifetime": 3600,
           }
         ]
       ASPNET_SERVICES_OPTIONS_INLINE: |
