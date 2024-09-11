@@ -71,21 +71,6 @@ parameters:
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
-			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
-			count: 2
-			path: Classes/UserFactory/BackendUserFactory.php
-
-		-
-			message: "#^Cannot call method fetchAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
-			count: 2
-			path: Classes/UserFactory/BackendUserFactory.php
-
-		-
-			message: "#^Cannot call method fetchOne\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
-			count: 2
-			path: Classes/UserFactory/BackendUserFactory.php
-
-		-
 			message: "#^Method Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\BackendUserFactory\\:\\:createBasicBackendUser\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/UserFactory/BackendUserFactory.php
@@ -151,13 +136,18 @@ parameters:
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
-			message: "#^Attribute class JetBrains\\\\PhpStorm\\\\ArrayShape does not exist\\.$#"
+			message: "#^Negated boolean expression is always false\\.$#"
 			count: 1
-			path: Classes/UserFactory/FrontendUserFactory.php
+			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
-			message: "#^Cannot call method fetchAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			message: "#^PHPDoc tag @throws with type Doctrine\\\\DBAL\\\\DBALException\\|Doctrine\\\\DBAL\\\\Driver\\\\Exception is not subtype of Throwable$#"
 			count: 2
+			path: Classes/UserFactory/BackendUserFactory.php
+
+		-
+			message: "#^Attribute class JetBrains\\\\PhpStorm\\\\ArrayShape does not exist\\.$#"
+			count: 1
 			path: Classes/UserFactory/FrontendUserFactory.php
 
 		-
@@ -206,16 +196,16 @@ parameters:
 			path: Classes/UserFactory/FrontendUserFactory.php
 
 		-
-			message: "#^Property Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:\\$extendedProviderConfiguration type has no value type specified in iterable type array\\.$#"
+			message: "#^Negated boolean expression is always false\\.$#"
 			count: 1
 			path: Classes/UserFactory/FrontendUserFactory.php
 
 		-
-			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
-			count: 1
-			path: Classes/UserFactory/ImageUserFactory.php
+			message: "#^PHPDoc tag @throws with type Doctrine\\\\DBAL\\\\DBALException\\|Doctrine\\\\DBAL\\\\Driver\\\\Exception is not subtype of Throwable$#"
+			count: 2
+			path: Classes/UserFactory/FrontendUserFactory.php
 
 		-
-			message: "#^Cannot call method fetchFirstColumn\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			message: "#^Property Xima\\\\XimaOauth2Extended\\\\UserFactory\\\\FrontendUserFactory\\:\\:\\$extendedProviderConfiguration type has no value type specified in iterable type array\\.$#"
 			count: 1
-			path: Classes/UserFactory/ImageUserFactory.php
+			path: Classes/UserFactory/FrontendUserFactory.php
