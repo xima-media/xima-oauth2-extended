@@ -13,7 +13,7 @@
 	"require": {
 		"php": ">=8.2",
 		"league/oauth2-client": ">=2.7",
-		"waldhacker/typo3-oauth2-client": "dev-feature/v12-compatibility-1 || dev-v13",
+		"waldhacker/typo3-oauth2-client": "dev-feature/v12-compatibility-1 || v13.x-dev",
 		"ext-pdo": "*",
 		"typo3/cms-core": "^12.0 || ^13.0"
 	},
