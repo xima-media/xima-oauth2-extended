@@ -27,15 +27,11 @@ services:
         {
           "AutomaticRedirectAfterSignOut": true
         }
-      API_SCOPES_INLINE: |
+      IDENTITY_RESOURCES_INLINE: |
         - Name: avatar
-      API_RESOURCES_INLINE: |
-        - Name: authentik
-          Scopes:
-            - openid
-            - profile
-            - email
+          ClaimTypes:
             - avatar
+            - username
       USERS_CONFIGURATION_INLINE: |
         [
           {
@@ -54,8 +50,13 @@ services:
                 "ValueType": "string"
               },
               {
+                "Type": "username",
+                "Value": "User1",
+                "ValueType": "string"
+              },
+              {
                 "Type": "avatar",
-                "Value": "Test's Api Resource Custom Claim",
+                "Value": "test",
                 "ValueType": "string"
               }
             ]
@@ -67,13 +68,15 @@ services:
             "ClientId": "authentik-mock-client",
             "ClientSecrets": ["authentik-mock-client-secret"],
             "Description": "Client for authentik credentials flow",
-            "AllowedGrantTypes": ["authorization_code"],
+            "AllowedGrantTypes": ["authorization_code", "password"],
             "RequirePkce": false,
             "AllowAccessTokensViaBrowser": true,
             "RedirectUris": ["https://xima-oauth2-extended.ddev.site/typo3/login?loginProvider=1616569531&oauth2-provider=authentik&login_status=login&commandLI=attempt"],
             "AllowedScopes": ["openid", "profile", "email", "avatar"],
             "IdentityTokenLifetime": 3600,
             "AccessTokenLifetime": 3600,
+            "RequireClientSecret": true,
+            "AlwaysIncludeUserClaimsInIdToken": true,
           }
         ]
       ASPNET_SERVICES_OPTIONS_INLINE: |
