@@ -151,15 +151,15 @@ makes the trick. To use it, adjust your `composer.json`:
 
 ```json
 {
-  "repositories": [
-    {
-      "url": "https://github.com/maikschneider/ext-oauth2-client.git",
-      "type": "git"
+    "repositories": [
+        {
+            "url": "https://github.com/maikschneider/ext-oauth2-client.git",
+            "type": "git"
+        }
+    ],
+    "require": {
+        "waldhacker/typo3-oauth2-client": "dev-feature/v12-compatibility-1"
     }
-  ],
-  "require": {
-    "waldhacker/typo3-oauth2-client": "dev-feature/v12-compatibility-1"
-  }
 }
 ```
 
