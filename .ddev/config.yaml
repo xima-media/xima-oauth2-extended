@@ -1,11 +1,12 @@
 name: xima-oauth2-extended
 type: typo3
 docroot: public
-php_version: "8.1"
+php_version: "8.2"
 webserver_type: nginx-fpm
 router_http_port: "80"
 router_https_port: "443"
 xdebug_enabled: false
+webimage_extra_packages: [libxml2-utils]
 additional_hostnames: []
 additional_fqdns: []
 database:
