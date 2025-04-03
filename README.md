@@ -137,30 +137,3 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']['1616569531'
 ```
 
 </details>
-
-<details>
-<summary>
-Usage in TYPO3v12
-</summary>
-
-The TYPO3
-extension [waldhacker/ext-oauth2-client](https://github.com/waldhacker/ext-oauth2-client)
-is not yet ready for v12. However, there is a feature branch that is almost
-working - [this fork](https://github.com/maikschneider/ext-oauth2-client/tree/feature/v12-compatibility-1)
-makes the trick. To use it, adjust your `composer.json`:
-
-```json
-{
-    "repositories": [
-        {
-            "url": "https://github.com/maikschneider/ext-oauth2-client.git",
-            "type": "git"
-        }
-    ],
-    "require": {
-        "waldhacker/typo3-oauth2-client": "dev-feature/v12-compatibility-1"
-    }
-}
-```
-
-</details>
