@@ -10,13 +10,13 @@ $EM_CONF[$_EXTKEY] = [
     'state' => 'stable',
     'uploadfolder' => 0,
     'clearCacheOnLoad' => 1,
-    'version' => '2.0.3',
+    'version' => '3.0.0',
     'autoload' => [
         'psr-4' => ['Xima\\XimaOauth2Extended\\' => 'Classes'],
     ],
     'constraints' => [
         'depends' => [
-            'typo3' => '11.5.99-12.4.99',
+            'typo3' => '12.0.0-13.99.99',
         ],
     ],
 ];
