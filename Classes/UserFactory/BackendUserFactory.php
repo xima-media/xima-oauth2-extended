@@ -116,7 +116,7 @@ class BackendUserFactory extends AbstractUserFactory
         $groupIdResults = $qb->select('g.uid')
             ->distinct()
             ->from('be_groups', 'g')
-            ->leftJoin('g', 'be_users', 'u', $qb->expr()->inSet('g.uid', $qb->quoteIdentifier('u.usergroup')))
+            ->leftJoin('g', 'be_users', 'u', $qb->expr()->inSet('u.usergroup', $qb->quoteIdentifier('g.uid')))
             ->where(
                 $qb->expr()->or(
                     $qb->expr()->in('g.oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)),

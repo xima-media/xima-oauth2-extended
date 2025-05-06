@@ -47,7 +47,7 @@ register it in the extension configuration:
                 'imageStorageBackendIdentifier' => '1:/user_upload/oauth',
             ],
             'secondProviderId' => [
-                'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\GenericResolver::class,
+                'resolverClassName' => \Xima\XimaOauth2Extended\ResourceResolver\GenericResourceResolver::class,
                 'createBackendUser' => true,
                 'createFrontendUser' => true,
                 'defaultBackendUsergroup' => '',
@@ -78,21 +78,21 @@ variations in features.
 
 The extension provides customizable options to tailor the resolver's behavior:
 
-| Option                           | Description                                                                                                | Default                          |
-|----------------------------------|------------------------------------------------------------------------------------------------------------|----------------------------------|
-| `resolverClassName`              | Class name of the resource resolver. See above for list of available resolver                              | `GenericResourceResolver::class` |
-| `createBackendUser`              | If set, create a new TYPO3 backend user if no existing user is authenticated                               | `false`                          |
-| `createFrontendUser`             | If set, create a new TYPO3 frontend user if no existing user is authenticated                              | `false`                          |
-| `defaultBackendUsergroup`        | List of be_group UIDs the created user will be assigned to. Using special value `all` makes the user admin | ` `                              |
-| `defaultFrontendUsergroup`       | List of fe_group UIDs the created user will be assigned to                                                 | ` `                              |
-| `createBackendUsergroups`        | If set, create backend user groups based on those of the remote user                                       | `false`                          |
-| `createFrontendUsergroups`       | If set, create frontend user groups based on those of the remote user                                      | `false`                          |
-| `requireBackendUsergroup`        | If set, require the remote user to be in at least one user group with matching `oauth2_id`                 | `false`                          |
-| `requireFrontendUsergroup`       | If set, require the remote user to be in at least one user group with matching `oauth2_id`                 | `false`                          |
-| `imageStorageBackendIdentifier`  | Storage identifier for downloaded backend user profile images                                              | `1:/user_upload/oauth`           |
-| `imageStorageFrontendIdentifier` | Storage identifier for downloaded frontend user profile images                                             | `1:/user_upload/oauth`           |
-| `defaultBackendLanguage`         | Language identifier for created backend users                                                              | `default`                        |
-| `defaultBackendAdminGroups`      | Comma separated list of remote `oauth2_id`s that will become Admin during login. Special value `all`.      | ` `                              |
+| Option                           | Description                                                                                           | Default                          |
+|----------------------------------|-------------------------------------------------------------------------------------------------------|----------------------------------|
+| `resolverClassName`              | Class name of the resource resolver. See above for list of available resolver                         | `GenericResourceResolver::class` |
+| `createBackendUser`              | If set, create a new TYPO3 backend user if no existing user is authenticated                          | `false`                          |
+| `createFrontendUser`             | If set, create a new TYPO3 frontend user if no existing user is authenticated                         | `false`                          |
+| `defaultBackendUsergroup`        | List of be_group UIDs the created user will be assigned to                                            | ` `                              |
+| `defaultFrontendUsergroup`       | List of fe_group UIDs the created user will be assigned to                                            | ` `                              |
+| `createBackendUsergroups`        | If set, create backend user groups based on those of the remote user                                  | `false`                          |
+| `createFrontendUsergroups`       | If set, create frontend user groups based on those of the remote user                                 | `false`                          |
+| `requireBackendUsergroup`        | If set, require the remote user to be in at least one user group with matching `oauth2_id`            | `false`                          |
+| `requireFrontendUsergroup`       | If set, require the remote user to be in at least one user group with matching `oauth2_id`            | `false`                          |
+| `imageStorageBackendIdentifier`  | Storage identifier for downloaded backend user profile images                                         | `1:/user_upload/oauth`           |
+| `imageStorageFrontendIdentifier` | Storage identifier for downloaded frontend user profile images                                        | `1:/user_upload/oauth`           |
+| `defaultBackendLanguage`         | Language identifier for created backend users                                                         | `default`                        |
+| `defaultBackendAdminGroups`      | Comma separated list of remote `oauth2_id`s that will become Admin during login. Special value `all`. | ` `                              |
 
 ## FAQ
 
@@ -134,33 +134,6 @@ login over classic username/password), use the following snippet:
 
 ```php
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']['1616569531']['sorting'] = 75;
-```
-
-</details>
-
-<details>
-<summary>
-Usage in TYPO3v12
-</summary>
-
-The TYPO3
-extension [waldhacker/ext-oauth2-client](https://github.com/waldhacker/ext-oauth2-client)
-is not yet ready for v12. However, there is a feature branch that is almost
-working - [this fork](https://github.com/maikschneider/ext-oauth2-client/tree/feature/v12-compatibility-1)
-makes the trick. To use it, adjust your `composer.json`:
-
-```json
-{
-  "repositories": [
-    {
-      "url": "https://github.com/maikschneider/ext-oauth2-client.git",
-      "type": "git"
-    }
-  ],
-  "require": {
-    "waldhacker/typo3-oauth2-client": "dev-feature/v12-compatibility-1"
-  }
-}
 ```
 
 </details>

@@ -6,6 +6,7 @@ webserver_type: nginx-fpm
 router_http_port: "80"
 router_https_port: "443"
 xdebug_enabled: false
+webimage_extra_packages: [libxml2-utils]
 additional_hostnames: []
 additional_fqdns: []
 database:
