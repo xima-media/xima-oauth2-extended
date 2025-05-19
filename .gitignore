@@ -1,10 +1,14 @@
 composer.lock
+config/
 core
 public/_assets
 public/index.php
 public/fileadmin
 public/typo3
 public/typo3conf
+public/typo3temp
+
+packages
 
 vendor
 var

@@ -2,11 +2,11 @@
 
 namespace Xima\XimaOauth2Extended\UserFactory;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\Exception;
 use JetBrains\PhpStorm\ArrayShape;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -39,11 +39,11 @@ class BackendUserFactory extends AbstractUserFactory
         $result = $qb->select('*')
             ->from('sys_file_reference')
             ->where(
-                $qb->expr()->eq('uid_foreign', $qb->createNamedParameter($userRecord['uid'], \PDO::PARAM_INT)),
+                $qb->expr()->eq('uid_foreign', $qb->createNamedParameter($userRecord['uid'], Connection::PARAM_INT)),
                 $qb->expr()->eq('tablenames', $qb->createNamedParameter('be_users')),
                 $qb->expr()->eq('fieldname', $qb->createNamedParameter('avatar'))
             )
-            ->execute()
+            ->executeQuery()
             ->fetchOne();
         if ($result) {
             return;
@@ -51,7 +51,8 @@ class BackendUserFactory extends AbstractUserFactory
 
         $imageUtility = new ImageUserFactory(
             $this->resolver,
-            $this->resolver->getOptions()->imageStorageBackendIdentifier
+            $this->resolver->getOptions()->imageStorageBackendIdentifier,
+            $this->logger
         );
         $success = $imageUtility->addProfileImageForBackendUser($userRecord['uid']);
         if ($success) {
@@ -82,7 +83,7 @@ class BackendUserFactory extends AbstractUserFactory
         $existingGroupsResult = $qb->select('oauth2_id')
             ->from('be_groups')
             ->where($qb->expr()->in('oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)))
-            ->execute()
+            ->executeQuery()
             ->fetchAllAssociative();
 
         $groupIdsToCreate = array_diff($groupIds, array_column($existingGroupsResult, 'oauth2_id'));
@@ -90,7 +91,7 @@ class BackendUserFactory extends AbstractUserFactory
             return;
         }
 
-        $insertValues = array_map(function ($oauthId) {
+        $insertValues = array_map(static function ($oauthId) {
             return [time(), time(), $oauthId, $oauthId];
         }, $groupIdsToCreate);
 
@@ -99,7 +100,7 @@ class BackendUserFactory extends AbstractUserFactory
             'be_groups',
             $insertValues,
             ['crdate', 'tstamp', 'title', 'oauth2_id'],
-            [\PDO::PARAM_INT, \PDO::PARAM_INT, \PDO::PARAM_STR, \PDO::PARAM_STR]
+            [Connection::PARAM_INT, Connection::PARAM_INT, Connection::PARAM_STR, Connection::PARAM_STR]
         );
     }
 
@@ -121,11 +122,11 @@ class BackendUserFactory extends AbstractUserFactory
                     $qb->expr()->in('g.oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)),
                     $qb->expr()->and(
                         $qb->expr()->eq('g.oauth2_id', $qb->createNamedParameter('')),
-                        $qb->expr()->eq('u.uid', $qb->createNamedParameter($typo3User['uid'], \PDO::PARAM_INT))
+                        $qb->expr()->eq('u.uid', $qb->createNamedParameter($typo3User['uid'], Connection::PARAM_INT))
                     )
                 )
             )
-            ->execute()
+            ->executeQuery()
             ->fetchAllAssociative();
 
         $groupIds = array_map(function ($groupResult) {
@@ -166,7 +167,7 @@ class BackendUserFactory extends AbstractUserFactory
         }
         $qb->update('be_users')
             ->where(
-                $qb->expr()->eq('uid', $qb->createNamedParameter($typo3User['uid'], \PDO::PARAM_INT))
+                $qb->expr()->eq('uid', $qb->createNamedParameter($typo3User['uid'], Connection::PARAM_INT))
             )
             ->executeStatement();
     }
@@ -254,8 +255,8 @@ class BackendUserFactory extends AbstractUserFactory
         $user = $qb
             ->select('*')
             ->from('be_users')
-            ->where($qb->expr()->orX(...$constraints))
-            ->execute()
+            ->where($qb->expr()->or(...$constraints))
+            ->executeQuery()
             ->fetchAssociative();
 
         return $user ?: null;
@@ -273,7 +274,7 @@ class BackendUserFactory extends AbstractUserFactory
         $existingGroups = $qb->count('uid')
             ->from('be_groups')
             ->where($qb->expr()->in('oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)))
-            ->execute()
+            ->executeQuery()
             ->fetchOne();
 
         return (bool)$existingGroups;
@@ -316,20 +317,15 @@ class BackendUserFactory extends AbstractUserFactory
     }
 
     /**
-     * @throws DBALException
      * @throws Exception
      */
     public function persistAndRetrieveUser($userRecord): ?array
     {
         $password = $userRecord['password'];
 
-        $user = $this->getQueryBuilder('be_users')->insert('be_users')
+        $this->getQueryBuilder('be_users')->insert('be_users')
             ->values($userRecord)
-            ->execute();
-
-        if (!$user) {
-            return null;
-        }
+            ->executeStatement();
 
         $qb = $this->getQueryBuilder('be_users');
         return $qb->select('*')
@@ -337,12 +333,11 @@ class BackendUserFactory extends AbstractUserFactory
             ->where(
                 $qb->expr()->eq('password', $qb->createNamedParameter($password))
             )
-            ->execute()
+            ->executeQuery()
             ->fetchAssociative();
     }
 
     /**
-     * @throws DBALException
      * @throws Exception
      */
     public function persistIdentityForUser(array $userRecord): bool
@@ -358,7 +353,7 @@ class BackendUserFactory extends AbstractUserFactory
                 'cruser_id' => (int)$userRecord['uid'],
                 'parentid' => (int)$userRecord['uid'],
             ])
-            ->execute();
+            ->executeStatement();
 
         // get newly created identity
         $qb = $this->getQueryBuilder('tx_oauth2_beuser_provider_configuration');

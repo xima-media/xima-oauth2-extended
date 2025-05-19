@@ -2,11 +2,11 @@
 
 namespace Xima\XimaOauth2Extended\UserFactory;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\Exception;
 use JetBrains\PhpStorm\ArrayShape;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -45,14 +45,14 @@ class FrontendUserFactory
         if ($username) {
             $constraints[] = $qb->expr()->eq(
                 'username',
-                $qb->createNamedParameter($username, \PDO::PARAM_STR)
+                $qb->createNamedParameter($username, Connection::PARAM_STR)
             );
         }
 
         if ($email) {
             $constraints[] = $qb->expr()->eq(
                 'email',
-                $qb->createNamedParameter($email, \PDO::PARAM_STR)
+                $qb->createNamedParameter($email, Connection::PARAM_STR)
             );
         }
 
@@ -63,8 +63,8 @@ class FrontendUserFactory
         $user = $qb
             ->select('*')
             ->from('fe_users')
-            ->where($qb->expr()->orX(...$constraints))
-            ->execute()
+            ->where($qb->expr()->or(...$constraints))
+            ->executeQuery()
             ->fetchAssociative();
 
         return $user ?: null;
@@ -139,15 +139,14 @@ class FrontendUserFactory
             ->where(
                 $qb->expr()->eq(
                     'uid',
-                    $qb->createNamedParameter($userRecord['uid'], \PDO::PARAM_INT)
+                    $qb->createNamedParameter($userRecord['uid'], Connection::PARAM_INT)
                 )
             )
-            ->set('slug', $slug);
-        $qb->execute();
+            ->set('slug', $slug)
+            ->executeStatement();
     }
 
     /**
-     * @throws DBALException
      * @throws Exception
      */
     public function persistIdentityForUser($userRecord): bool
@@ -163,7 +162,7 @@ class FrontendUserFactory
                 'cruser_id' => (int)$userRecord['uid'],
                 'parentid' => (int)$userRecord['uid'],
             ])
-            ->execute();
+            ->executeStatement();
 
         // get newly created identity
         $qb = $this->getQueryBuilder('tx_oauth2_feuser_provider_configuration');
@@ -192,28 +191,23 @@ class FrontendUserFactory
     }
 
     /**
-     * @throws DBALException
      * @throws Exception
      */
     public function persistAndRetrieveUser($userRecord): ?array
     {
         $password = $userRecord['password'];
 
-        $user = $this->getQueryBuilder('fe_users')->insert('fe_users')
+        $this->getQueryBuilder('fe_users')->insert('fe_users')
             ->values($userRecord)
-            ->execute();
-
-        if (!$user) {
-            return null;
-        }
+            ->executeStatement();
 
         $qb = $this->getQueryBuilder('fe_users');
         return $qb->select('*')
             ->from('fe_users')
             ->where(
-                $qb->expr()->eq('password', $qb->createNamedParameter($password, \PDO::PARAM_STR))
+                $qb->expr()->eq('password', $qb->createNamedParameter($password, Connection::PARAM_STR))
             )
-            ->execute()
+            ->executeQuery()
             ->fetchAssociative();
     }
 

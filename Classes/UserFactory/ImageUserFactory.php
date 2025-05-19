@@ -2,7 +2,9 @@
 
 namespace Xima\XimaOauth2Extended\UserFactory;
 
+use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
@@ -13,7 +15,8 @@ final class ImageUserFactory
 {
     public function __construct(
         private ProfileImageResolverInterface $resolver,
-        private readonly string $fileStorageIdentifier
+        private readonly string $fileStorageIdentifier,
+        private readonly LoggerInterface $logger
     ) {
     }
 
@@ -33,7 +36,8 @@ final class ImageUserFactory
             $fileIdentifier = $this->writeFile($imageContent, $this->fileStorageIdentifier);
             $sysFileUid = $this->createSysFile($fileIdentifier, $fileStorageUid);
             self::createSysFileReferenceForUser($sysFileUid, 'be_users', 'avatar', $beUserUid);
-        } catch (\Exception) {
+        } catch (\Exception $e) {
+            $this->logger->error('Could not create file reference for backend user "' . $beUserUid . '"', ['code' => $e->getCode(), 'message' => $e->getMessage()]);
             return false;
         }
 
@@ -67,14 +71,14 @@ final class ImageUserFactory
         return $relativeStoragePath . '/' . $fileName;
     }
 
-    private static function getAbsoluteImageStoragePathFromIdentifier(string $identifier): ?string
+    private static function getAbsoluteImageStoragePathFromIdentifier(string $identifier): string
     {
         $storageUid = self::getFileStorageUidFromIdentifier($identifier) ?? 0;
         $absoluteStoragePath = self::getAbsoluteFileStoragePathFromUid($storageUid);
         $relativeImagePath = self::getRelativeFileStoragePathFromIdentifier($identifier);
 
         if (!$absoluteStoragePath || !$relativeImagePath) {
-            return null;
+            return new \RuntimeException('Count not resolve storage Path from identifier "' . $identifier . '"');
         }
 
         return $absoluteStoragePath . $relativeImagePath;
@@ -85,11 +89,11 @@ final class ImageUserFactory
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_storage');
         $result = $qb->select('configuration')
             ->from('sys_file_storage')
-            ->where($qb->expr()->eq('uid', $qb->createNamedParameter($uid, \PDO::PARAM_INT)))
-            ->execute()
+            ->where($qb->expr()->eq('uid', $qb->createNamedParameter($uid, Connection::PARAM_INT)))
+            ->executeQuery()
             ->fetchAllAssociative();
 
-        $config = GeneralUtility::xml2array($result[0]['configuration']);
+        $config = GeneralUtility::xml2array($result[0]['configuration'] ?? '');
         $basePath = $config['data']['sDEF']['lDEF']['basePath']['vDEF'] ?? '';
         $pathType = $config['data']['sDEF']['lDEF']['pathType']['vDEF'] ?? '';
 
@@ -130,13 +134,13 @@ final class ImageUserFactory
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file');
         $qb->insert('sys_file')
             ->values($insertValues)
-            ->execute();
+            ->executeStatement();
 
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file');
         $result = $qb->select('uid')
             ->from('sys_file')
             ->where($qb->expr()->eq('identifier', $qb->createNamedParameter($fileIdentifier)))
-            ->execute()
+            ->executeQuery()
             ->fetchFirstColumn();
 
         return $result[0];
@@ -173,6 +177,6 @@ final class ImageUserFactory
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_reference');
         $qb->insert('sys_file_reference')
             ->values($insertValues)
-            ->execute();
+            ->executeStatement();
     }
 }

@@ -48,7 +48,7 @@ class BackendUserLookup
         }
 
         // create/link user or update
-        $userFactory = new BackendUserFactory($resolver, $providerId);
+        $userFactory = new BackendUserFactory($resolver, $providerId, $this->logger);
         $typo3User = $event->getTypo3User();
         if ($typo3User === null) {
             $this->logger->info('Register remote user from provider "' . $event->getProviderId() . '" (remote id: ' . $event->getRemoteUser()->getId() . ')');
