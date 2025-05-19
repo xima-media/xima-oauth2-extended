@@ -2,7 +2,6 @@
 
 namespace Xima\XimaOauth2Extended\UserFactory;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\Exception;
 use JetBrains\PhpStorm\ArrayShape;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
@@ -148,7 +147,6 @@ class FrontendUserFactory
     }
 
     /**
-     * @throws DBALException
      * @throws Exception
      */
     public function persistIdentityForUser($userRecord): bool
@@ -193,20 +191,15 @@ class FrontendUserFactory
     }
 
     /**
-     * @throws DBALException
      * @throws Exception
      */
     public function persistAndRetrieveUser($userRecord): ?array
     {
         $password = $userRecord['password'];
 
-        $user = $this->getQueryBuilder('fe_users')->insert('fe_users')
+        $this->getQueryBuilder('fe_users')->insert('fe_users')
             ->values($userRecord)
             ->executeQuery();
-
-        if (!$user) {
-            return null;
-        }
 
         $qb = $this->getQueryBuilder('fe_users');
         return $qb->select('*')

@@ -2,7 +2,6 @@
 
 namespace Xima\XimaOauth2Extended\UserFactory;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\Exception;
 use JetBrains\PhpStorm\ArrayShape;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
@@ -52,7 +51,8 @@ class BackendUserFactory extends AbstractUserFactory
 
         $imageUtility = new ImageUserFactory(
             $this->resolver,
-            $this->resolver->getOptions()->imageStorageBackendIdentifier
+            $this->resolver->getOptions()->imageStorageBackendIdentifier,
+            $this->logger
         );
         $success = $imageUtility->addProfileImageForBackendUser($userRecord['uid']);
         if ($success) {
@@ -91,7 +91,7 @@ class BackendUserFactory extends AbstractUserFactory
             return;
         }
 
-        $insertValues = array_map(function ($oauthId) {
+        $insertValues = array_map(static function ($oauthId) {
             return [time(), time(), $oauthId, $oauthId];
         }, $groupIdsToCreate);
 
@@ -317,20 +317,15 @@ class BackendUserFactory extends AbstractUserFactory
     }
 
     /**
-     * @throws DBALException
      * @throws Exception
      */
     public function persistAndRetrieveUser($userRecord): ?array
     {
         $password = $userRecord['password'];
 
-        $user = $this->getQueryBuilder('be_users')->insert('be_users')
+        $this->getQueryBuilder('be_users')->insert('be_users')
             ->values($userRecord)
             ->executeQuery();
-
-        if (!$user) {
-            return null;
-        }
 
         $qb = $this->getQueryBuilder('be_users');
         return $qb->select('*')
@@ -343,7 +338,6 @@ class BackendUserFactory extends AbstractUserFactory
     }
 
     /**
-     * @throws DBALException
      * @throws Exception
      */
     public function persistIdentityForUser(array $userRecord): bool

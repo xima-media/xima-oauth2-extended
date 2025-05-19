@@ -2,6 +2,7 @@
 
 namespace Xima\XimaOauth2Extended\UserFactory;
 
+use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -14,7 +15,8 @@ final class ImageUserFactory
 {
     public function __construct(
         private ProfileImageResolverInterface $resolver,
-        private readonly string $fileStorageIdentifier
+        private readonly string $fileStorageIdentifier,
+        private readonly LoggerInterface $logger
     ) {
     }
 
@@ -34,7 +36,8 @@ final class ImageUserFactory
             $fileIdentifier = $this->writeFile($imageContent, $this->fileStorageIdentifier);
             $sysFileUid = $this->createSysFile($fileIdentifier, $fileStorageUid);
             self::createSysFileReferenceForUser($sysFileUid, 'be_users', 'avatar', $beUserUid);
-        } catch (\Exception) {
+        } catch (\Exception $e) {
+            $this->logger->error('Could not create file reference for backend user "' . $beUserUid . '"', ['code' => $e->getCode(), 'message' => $e->getMessage()]);
             return false;
         }
 
@@ -68,14 +71,14 @@ final class ImageUserFactory
         return $relativeStoragePath . '/' . $fileName;
     }
 
-    private static function getAbsoluteImageStoragePathFromIdentifier(string $identifier): ?string
+    private static function getAbsoluteImageStoragePathFromIdentifier(string $identifier): string
     {
         $storageUid = self::getFileStorageUidFromIdentifier($identifier) ?? 0;
         $absoluteStoragePath = self::getAbsoluteFileStoragePathFromUid($storageUid);
         $relativeImagePath = self::getRelativeFileStoragePathFromIdentifier($identifier);
 
         if (!$absoluteStoragePath || !$relativeImagePath) {
-            return null;
+            return new \RuntimeException('Count not resolve storage Path from identifier "' . $identifier . '"');
         }
 
         return $absoluteStoragePath . $relativeImagePath;
@@ -90,7 +93,7 @@ final class ImageUserFactory
             ->executeQuery()
             ->fetchAllAssociative();
 
-        $config = GeneralUtility::xml2array($result[0]['configuration']);
+        $config = GeneralUtility::xml2array($result[0]['configuration'] ?? '');
         $basePath = $config['data']['sDEF']['lDEF']['basePath']['vDEF'] ?? '';
         $pathType = $config['data']['sDEF']['lDEF']['pathType']['vDEF'] ?? '';
 
