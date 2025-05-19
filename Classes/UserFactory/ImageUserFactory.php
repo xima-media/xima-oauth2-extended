@@ -134,7 +134,7 @@ final class ImageUserFactory
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file');
         $qb->insert('sys_file')
             ->values($insertValues)
-            ->executeQuery();
+            ->executeStatement();
 
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file');
         $result = $qb->select('uid')
@@ -177,6 +177,6 @@ final class ImageUserFactory
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_reference');
         $qb->insert('sys_file_reference')
             ->values($insertValues)
-            ->executeQuery();
+            ->executeStatement();
     }
 }

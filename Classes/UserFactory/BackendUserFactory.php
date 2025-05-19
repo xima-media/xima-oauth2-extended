@@ -169,7 +169,7 @@ class BackendUserFactory extends AbstractUserFactory
             ->where(
                 $qb->expr()->eq('uid', $qb->createNamedParameter($typo3User['uid'], Connection::PARAM_INT))
             )
-            ->executeQuery();
+            ->executeStatement();
     }
 
     public function registerRemoteUser(): ?array
@@ -325,7 +325,7 @@ class BackendUserFactory extends AbstractUserFactory
 
         $this->getQueryBuilder('be_users')->insert('be_users')
             ->values($userRecord)
-            ->executeQuery();
+            ->executeStatement();
 
         $qb = $this->getQueryBuilder('be_users');
         return $qb->select('*')
@@ -353,7 +353,7 @@ class BackendUserFactory extends AbstractUserFactory
                 'cruser_id' => (int)$userRecord['uid'],
                 'parentid' => (int)$userRecord['uid'],
             ])
-            ->executeQuery();
+            ->executeStatement();
 
         // get newly created identity
         $qb = $this->getQueryBuilder('tx_oauth2_beuser_provider_configuration');
@@ -375,7 +375,7 @@ class BackendUserFactory extends AbstractUserFactory
                 $qb->expr()->eq('uid', (int)$userRecord['uid'])
             )
             ->set('tx_oauth2_client_configs', (int)$identityCount)
-            ->executeQuery();
+            ->executeStatement();
 
         return true;
     }

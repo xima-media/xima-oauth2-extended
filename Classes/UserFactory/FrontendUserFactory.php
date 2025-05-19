@@ -142,8 +142,8 @@ class FrontendUserFactory
                     $qb->createNamedParameter($userRecord['uid'], Connection::PARAM_INT)
                 )
             )
-            ->set('slug', $slug);
-        $qb->executeQuery();
+            ->set('slug', $slug)
+            ->executeStatement();
     }
 
     /**
@@ -162,7 +162,7 @@ class FrontendUserFactory
                 'cruser_id' => (int)$userRecord['uid'],
                 'parentid' => (int)$userRecord['uid'],
             ])
-            ->executeQuery();
+            ->executeStatement();
 
         // get newly created identity
         $qb = $this->getQueryBuilder('tx_oauth2_feuser_provider_configuration');
@@ -199,7 +199,7 @@ class FrontendUserFactory
 
         $this->getQueryBuilder('fe_users')->insert('fe_users')
             ->values($userRecord)
-            ->executeQuery();
+            ->executeStatement();
 
         $qb = $this->getQueryBuilder('fe_users');
         return $qb->select('*')
