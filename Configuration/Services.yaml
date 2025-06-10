@@ -16,3 +16,8 @@ services:
     tags:
       - name: event.listener
         identifier: 'oauthFeUserRegistration'
+
+  Xima\XimaOauth2Extended\EventListener\SudoModeRequiredEventListener:
+    tags:
+      - name: event.listener
+        identifier: 'sudoModeRequiredEventListener'
