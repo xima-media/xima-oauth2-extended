@@ -350,7 +350,6 @@ class BackendUserFactory extends AbstractUserFactory
                 'provider' => $this->providerId,
                 'crdate' => time(),
                 'tstamp' => time(),
-                'cruser_id' => (int)$userRecord['uid'],
                 'parentid' => (int)$userRecord['uid'],
             ])
             ->executeStatement();
