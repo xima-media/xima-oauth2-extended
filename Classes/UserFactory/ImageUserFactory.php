@@ -33,8 +33,8 @@ final class ImageUserFactory
         }
 
         try {
-            $fileIdentifier = $this->writeFile($imageContent, $this->fileStorageIdentifier);
-            $sysFileUid = $this->createSysFile($fileIdentifier, $fileStorageUid);
+            [$fileIdentifier, $sha1] = $this->writeFile($imageContent, $this->fileStorageIdentifier);
+            $sysFileUid = $this->createSysFile($fileIdentifier, $fileStorageUid, $sha1);
             self::createSysFileReferenceForUser($sysFileUid, 'be_users', 'avatar', $beUserUid);
         } catch (\Exception $e) {
             $this->logger->error('Could not create file reference for backend user "' . $beUserUid . '"', ['code' => $e->getCode(), 'message' => $e->getMessage()]);
@@ -53,7 +53,10 @@ final class ImageUserFactory
         return null;
     }
 
-    private function writeFile(string $imageContent, string $fileStorageIdentifier): string
+    /**
+     * @return array{0: string, 1: string} [fileIdentifier, sha1Hash]
+     */
+    private function writeFile(string $imageContent, string $fileStorageIdentifier): array
     {
         // create directory
         $fileStoragePath = self::getAbsoluteImageStoragePathFromIdentifier($fileStorageIdentifier);
@@ -62,13 +65,15 @@ final class ImageUserFactory
         }
 
         // write file
-        $fileName = sha1($imageContent) . '.jpg';
+        $sha1 = sha1($imageContent);
+        $fileName = $sha1 . '.jpg';
         $filePath = $fileStoragePath . '/' . $fileName;
         GeneralUtility::writeFile($filePath, $imageContent);
 
         // public path
-        $relativeStoragePath = self::getRelativeFileStoragePathFromIdentifier($fileStorageIdentifier);
-        return $relativeStoragePath . '/' . $fileName;
+        $relativeStoragePath = self::getRelativeFileStoragePathFromIdentifier($fileStorageIdentifier) ?? '';
+        $relativeFilePath = $relativeStoragePath . '/' . $fileName;
+        return [$relativeFilePath, $sha1];
     }
 
     private static function getAbsoluteImageStoragePathFromIdentifier(string $identifier): string
@@ -117,7 +122,7 @@ final class ImageUserFactory
         return null;
     }
 
-    private function createSysFile(string $fileIdentifier, int $storage): int
+    private function createSysFile(string $fileIdentifier, int $storage, string $sha1): int
     {
         $now = (new \DateTime())->getTimestamp();
 
@@ -129,6 +134,7 @@ final class ImageUserFactory
             'creation_date' => $now,
             'modification_date' => $now,
             'storage' => $storage,
+            'sha1' => $sha1,
         ];
 
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file');
