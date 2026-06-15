@@ -21,3 +21,10 @@ services:
     tags:
       - name: event.listener
         identifier: 'oauthSkipSudoModeRequirement'
+
+  Xima\XimaOauth2Extended\Command\SyncBackendUsersCommand:
+    tags:
+      - name: 'console.command'
+        command: 'xima:oauth2:sync-backend-users'
+        description: 'Sync backend users from Microsoft Graph (app-only).'
+        schedulable: true

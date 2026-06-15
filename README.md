@@ -91,6 +91,72 @@ The extension provides customizable options to tailor the resolver's behavior:
 | `defaultBackendLanguage`         | Language identifier for created backend users                                                         | `default`                        |
 | `defaultBackendAdminGroups`      | Comma separated list of remote `oauth2_id`s that will become Admin during login. Special value `all`. | ` `                              |
 
+## User sync via Microsoft Graph (app-only)
+
+While the OAuth2 login provisions a TYPO3 user *reactively* when that user logs
+in, the Graph sync provisions backend users *proactively* — it pulls every user
+the registered Azure application can see and creates/updates the matching
+`be_users`, reusing the same factory pipeline (username/email mapping, group
+mapping via `oauth2_id`, optional profile image, identity link).
+
+### Azure app registration
+
+Register an application in your Microsoft tenant and grant it the following
+**Application** permissions (admin consent required):
+
+* `User.Read.All` — read all users
+* `GroupMember.Read.All` — read group membership (only needed for group sync)
+
+Create a client secret for the application.
+
+### Extension configuration
+
+Configure the credentials under *Settings → Extension Configuration →
+xima_oauth2_extended* (category *graphSync*) or in `settings.php`:
+
+```php
+'EXTENSIONS' => [
+    'xima_oauth2_extended' => [
+        'graphSync' => [
+            'tenantId' => '<directory (tenant) id>',
+            'clientId' => '<application (client) id>',
+            'clientSecret' => '<client secret>',
+            // ID of an existing oauth2_client_providers entry. Its ResolverOptions
+            // (createBackendUser, default groups, admin groups, image storage, ...)
+            // and identity link are reused for the synced users.
+            'providerId' => 'yourProviderId',
+            // Frontend sync only: storage page for created fe_users.
+            'frontendUserPid' => 0,
+        ],
+    ],
+],
+```
+
+Whether users are actually created and which groups they receive is governed by
+the [resolver options](#extended-resource-resolver-options) of the referenced
+`providerId` (e.g. `createBackendUser`, `defaultBackendUsergroup`,
+`createBackendUsergroups`, `defaultBackendAdminGroups`).
+
+### Running the sync
+
+```bash
+vendor/bin/typo3 xima:oauth2:sync-backend-users
+```
+
+The command is also schedulable: in the *Scheduler* backend module add an
+*Execute console commands* task for `xima:oauth2:sync-backend-users`.
+
+The application access token is acquired via the client-credentials grant and
+cached in `sys_registry` (`xima_oauth2_extended` / `graphAppToken`). The grant
+issues no refresh token, so the token is simply re-acquired once it expires —
+there is no separate token-refresh task.
+
+> **Note on identity matching:** the login flow links identities using the
+> id_token `sub` claim, while the app-only `/users` endpoint only exposes the
+> directory object id. Users matched purely by sync therefore use the object id
+> as identifier. The underlying `be_users` record is still matched by
+> username/email, so a synced user that later logs in resolves to the same user.
+
 ## FAQ
 
 <details>

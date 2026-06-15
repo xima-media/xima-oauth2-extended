@@ -1,2 +1,17 @@
 oauth2_client_providers {
 }
+
+# cat=graphSync; type=string; label=MS Graph tenant ID: Directory (tenant) ID of the registered Azure application used for app-only user sync
+graphSync.tenantId =
+
+# cat=graphSync; type=string; label=MS Graph client ID: Application (client) ID of the registered Azure application
+graphSync.clientId =
+
+# cat=graphSync; type=string; label=MS Graph client secret: Client secret of the registered Azure application
+graphSync.clientSecret =
+
+# cat=graphSync; type=string; label=OAuth2 provider ID: ID of the oauth2_client_providers entry whose ResolverOptions (create flags, default groups, ...) and identity link the synced users reuse
+graphSync.providerId =
+
+# cat=graphSync; type=int+; label=Frontend user storage PID: Page UID where synced frontend users are stored (frontend sync only)
+graphSync.frontendUserPid = 0
