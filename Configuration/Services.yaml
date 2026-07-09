@@ -28,3 +28,10 @@ services:
         command: 'xima:oauth2:sync-backend-users'
         description: 'Sync backend users from Microsoft Graph (app-only).'
         schedulable: true
+
+  Xima\XimaOauth2Extended\Command\SyncFrontendUsersCommand:
+    tags:
+      - name: 'console.command'
+        command: 'xima:oauth2:sync-frontend-users'
+        description: 'Sync frontend users from Microsoft Graph (app-only).'
+        schedulable: true

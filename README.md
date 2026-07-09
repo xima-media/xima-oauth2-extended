@@ -94,10 +94,15 @@ The extension provides customizable options to tailor the resolver's behavior:
 ## User sync via Microsoft Graph (app-only)
 
 While the OAuth2 login provisions a TYPO3 user *reactively* when that user logs
-in, the Graph sync provisions backend users *proactively* — it pulls every user
-the registered Azure application can see and creates/updates the matching
-`be_users`, reusing the same factory pipeline (username/email mapping, group
-mapping via `oauth2_id`, optional profile image, identity link).
+in, the Graph sync provisions users *proactively* — it pulls every user the
+registered Azure application can see and creates/updates the matching TYPO3
+users, reusing the same factory pipeline (username/email mapping, group mapping
+via `oauth2_id`, optional profile image, identity link).
+
+Both backend and frontend users can be synced:
+
+* `xima:oauth2:sync-backend-users` → `be_users` (+ `be_groups`)
+* `xima:oauth2:sync-frontend-users` → `fe_users` (+ `fe_groups`)
 
 ### Azure app registration
 
@@ -134,17 +139,27 @@ xima_oauth2_extended* (category *graphSync*) or in `settings.php`:
 
 Whether users are actually created and which groups they receive is governed by
 the [resolver options](#extended-resource-resolver-options) of the referenced
-`providerId` (e.g. `createBackendUser`, `defaultBackendUsergroup`,
-`createBackendUsergroups`, `defaultBackendAdminGroups`).
+`providerId`:
+
+* Backend: `createBackendUser`, `defaultBackendUsergroup`,
+`createBackendUsergroups`, `defaultBackendAdminGroups`
+* Frontend: `createFrontendUser`, `defaultFrontendUsergroup`,
+`createFrontendUsergroups`
+
+Frontend users are created on the page configured via `graphSync.frontendUserPid`.
 
 ### Running the sync
 
 ```bash
+# backend users (+ be_groups)
 vendor/bin/typo3 xima:oauth2:sync-backend-users
+
+# frontend users (+ fe_groups)
+vendor/bin/typo3 xima:oauth2:sync-frontend-users
 ```
 
-The command is also schedulable: in the *Scheduler* backend module add an
-*Execute console commands* task for `xima:oauth2:sync-backend-users`.
+Both commands are also schedulable: in the *Scheduler* backend module add an
+*Execute console commands* task for the respective command.
 
 The application access token is acquired via the client-credentials grant and
 cached in `sys_registry` (`xima_oauth2_extended` / `graphAppToken`). The grant

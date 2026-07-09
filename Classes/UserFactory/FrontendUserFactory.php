@@ -16,6 +16,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2FeUserProviderConfigurationRestriction;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
+use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
 
 class FrontendUserFactory
 {
@@ -24,6 +25,9 @@ class FrontendUserFactory
     protected string $providerId = '';
 
     protected array $extendedProviderConfiguration = [];
+
+    /** @var string[]|null */
+    protected ?array $remoteGroupIds = null;
 
     public function __construct(
         ResourceResolverInterface $resolver,
@@ -70,6 +74,24 @@ class FrontendUserFactory
         return $user ?: null;
     }
 
+    /**
+     * Updates an existing, already linked frontend user without inserting a new
+     * identity row. Counterpart to {@see registerRemoteUser()} used by the bulk
+     * Graph sync when an identity link already exists.
+     *
+     * @param array<string, mixed> $typo3User
+     * @return array<string, mixed>
+     */
+    public function updateTypo3User(array $typo3User): array
+    {
+        $this->resolver->updateFrontendUser($typo3User);
+        $this->createFrontendUserGroups();
+        $this->updateFrontendUserGroups($typo3User);
+        $this->saveUpdatedFrontendUser($typo3User);
+
+        return $typo3User;
+    }
+
     public function registerRemoteUser(int $targetPid): ?array
     {
         $doCreateNewUser = isset($this->extendedProviderConfiguration[$this->providerId]['createFrontendUser']) && $this->extendedProviderConfiguration[$this->providerId]['createFrontendUser'];
@@ -97,6 +119,20 @@ class FrontendUserFactory
             $userRecord = $this->persistAndRetrieveUser($userRecord);
         }
 
+        // abort if persistence failed
+        if (!is_array($userRecord)) {
+            return null;
+        }
+
+        // create user groups
+        $this->createFrontendUserGroups();
+
+        // update user groups
+        $this->updateFrontendUserGroups($userRecord);
+
+        // save updated user
+        $this->saveUpdatedFrontendUser($userRecord);
+
         // update user slug
         $this->updateFrontendUserSlug($userRecord);
 
@@ -108,6 +144,106 @@ class FrontendUserFactory
         }
 
         return null;
+    }
+
+    /** @return string[]|null */
+    protected function getRemoteGroupIdsCached(): ?array
+    {
+        if (!$this->resolver instanceof UserGroupResolverInterface) {
+            return null;
+        }
+        if ($this->remoteGroupIds === null) {
+            $this->remoteGroupIds = $this->resolver->resolveUserGroups();
+        }
+
+        return $this->remoteGroupIds;
+    }
+
+    protected function createFrontendUserGroups(): void
+    {
+        if (!$this->resolver->getOptions()->createFrontendUsergroups || !$this->resolver instanceof UserGroupResolverInterface) {
+            return;
+        }
+
+        $groupIds = $this->getRemoteGroupIdsCached();
+        if ($groupIds === null || !count($groupIds)) {
+            return;
+        }
+
+        $qb = $this->getQueryBuilder('fe_groups');
+        $existingGroupsResult = $qb->select('oauth2_id')
+            ->from('fe_groups')
+            ->where($qb->expr()->in('oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)))
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $groupIdsToCreate = array_diff($groupIds, array_column($existingGroupsResult, 'oauth2_id'));
+        if (!count($groupIdsToCreate)) {
+            return;
+        }
+
+        $insertValues = array_map(static function ($oauthId) {
+            return [time(), time(), $oauthId, $oauthId];
+        }, $groupIdsToCreate);
+
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('fe_groups');
+        $connection->bulkInsert(
+            'fe_groups',
+            $insertValues,
+            ['crdate', 'tstamp', 'title', 'oauth2_id'],
+            [Connection::PARAM_INT, Connection::PARAM_INT, Connection::PARAM_STR, Connection::PARAM_STR]
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $typo3User
+     */
+    protected function updateFrontendUserGroups(array &$typo3User): void
+    {
+        $groupIds = $this->getRemoteGroupIdsCached();
+
+        if ($groupIds === null) {
+            return;
+        }
+
+        $qb = $this->getQueryBuilder('fe_groups');
+        $groupIdResults = $qb->select('g.uid')
+            ->distinct()
+            ->from('fe_groups', 'g')
+            ->leftJoin('g', 'fe_users', 'u', $qb->expr()->inSet('u.usergroup', $qb->quoteIdentifier('g.uid')))
+            ->where(
+                $qb->expr()->or(
+                    $qb->expr()->in('g.oauth2_id', $qb->quoteArrayBasedValueListToStringList($groupIds)),
+                    $qb->expr()->and(
+                        $qb->expr()->eq('g.oauth2_id', $qb->createNamedParameter('')),
+                        $qb->expr()->eq('u.uid', $qb->createNamedParameter($typo3User['uid'], Connection::PARAM_INT))
+                    )
+                )
+            )
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $groupIds = array_map(static function ($groupResult) {
+            return $groupResult['uid'];
+        }, $groupIdResults);
+
+        $typo3User['usergroup'] = implode(',', $groupIds);
+    }
+
+    /**
+     * @param array<string, mixed> $typo3User
+     */
+    protected function saveUpdatedFrontendUser(array $typo3User): void
+    {
+        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('fe_users');
+        foreach ($typo3User as $fieldName => $value) {
+            $qb->set($fieldName, $value);
+        }
+        $qb->update('fe_users')
+            ->where(
+                $qb->expr()->eq('uid', $qb->createNamedParameter($typo3User['uid'], Connection::PARAM_INT))
+            )
+            ->executeStatement();
     }
 
     protected function updateFrontendUserSlug(&$userRecord): void
