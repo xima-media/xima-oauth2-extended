@@ -22,6 +22,10 @@ services:
       - name: event.listener
         identifier: 'oauthSkipSudoModeRequirement'
 
+  Xima\XimaOauth2Extended\Controller\GraphDebugController:
+    tags:
+      - 'backend.controller'
+
   Xima\XimaOauth2Extended\Command\SyncBackendUsersCommand:
     tags:
       - name: 'console.command'

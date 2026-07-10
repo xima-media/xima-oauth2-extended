@@ -170,9 +170,9 @@ each client's own options (same keys as the
 [resolver options](#extended-resource-resolver-options)):
 
 * Backend: `createBackendUser`, `defaultBackendUsergroup`,
-  `createBackendUsergroups`, `defaultBackendAdminGroups`
+`createBackendUsergroups`, `defaultBackendAdminGroups`
 * Frontend: `createFrontendUser`, `defaultFrontendUsergroup`,
-  `createFrontendUsergroups`
+`createFrontendUsergroups`
 
 Frontend users **and** auto-created frontend groups are stored on the page
 configured via the client's `frontendUserPid`.
@@ -206,6 +206,21 @@ task.
 > directory object id. Users matched purely by sync therefore use the object id
 > as identifier. The underlying `be_users` record is still matched by
 > username/email, so a synced user that later logs in resolves to the same user.
+
+### Backend module (debugging)
+
+An admin-only backend module **Admin Tools → Entra / Graph Debug** helps explore
+and debug the configured Graph endpoints. It is read-only (it never creates or
+changes users) and provides, per `graphSync` client:
+
+* **Configuration overview** — credentials (secret masked), identity provider,
+frontend PID, all sync options and the concrete Graph endpoints used.
+* **Test connection** — acquires an app-only token and reads a few sample users
+to confirm the credentials and permissions work.
+* **User search** — search the tenant by name / UPN / mail.
+* **User detail & mapping** — the raw Graph user next to the resolved TYPO3
+mapping (intended username/email, `be_users`/`fe_users` fields, and each
+group membership matched against the `oauth2_id` column).
 
 ## FAQ
 

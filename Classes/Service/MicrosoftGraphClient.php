@@ -104,6 +104,89 @@ class MicrosoftGraphClient
     }
 
     /**
+     * Searches users by display name, UPN or mail. An empty query returns the
+     * first `$top` users. Intended for the backend debugging module.
+     *
+     * @return array<int, array<string, mixed>>
+     * @throws OAuth2ConfigurationException
+     * @throws GraphApiException
+     */
+    public function searchUsers(GraphSyncConfiguration $config, string $query, int $top = 25): array
+    {
+        $token = $this->getAppAccessToken($config);
+        $top = max(1, min($top, 100));
+        $select = 'id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled';
+
+        $query = trim($query);
+        if ($query === '') {
+            $url = self::GRAPH_BASE_URL . '/users?$select=' . $select . '&$top=' . $top;
+
+            return $this->requestJson($url, $token)['value'] ?? [];
+        }
+
+        // $search needs the ConsistencyLevel: eventual header. Strip quotes to
+        // keep the search expression well-formed.
+        $term = str_replace('"', '', $query);
+        $search = rawurlencode(
+            '"displayName:' . $term . '" OR "userPrincipalName:' . $term . '" OR "mail:' . $term . '" OR "givenName:' . $term . '" OR "surname:' . $term . '"'
+        );
+        $url = self::GRAPH_BASE_URL . '/users?$select=' . $select . '&$top=' . $top . '&$search=' . $search;
+
+        return $this->requestJson($url, $token, ['ConsistencyLevel' => 'eventual'])['value'] ?? [];
+    }
+
+    /**
+     * Fetches a single user by object id or userPrincipalName.
+     *
+     * @return array<string, mixed>
+     * @throws OAuth2ConfigurationException
+     * @throws GraphApiException
+     */
+    public function getUser(GraphSyncConfiguration $config, string $userId): array
+    {
+        $token = $this->getAppAccessToken($config);
+        $select = 'id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,jobTitle,department,officeLocation,mobilePhone';
+        $url = self::GRAPH_BASE_URL . '/users/' . rawurlencode($userId) . '?$select=' . $select;
+
+        return $this->requestJson($url, $token);
+    }
+
+    /**
+     * Describes the concrete Graph endpoints used for a client, for display in
+     * the debugging module.
+     *
+     * @return array<string, string>
+     */
+    public function getEndpoints(GraphSyncConfiguration $config): array
+    {
+        return [
+            'tokenEndpoint' => 'https://login.microsoftonline.com/' . $config->tenantId . '/oauth2/v2.0/token',
+            'scope' => self::GRAPH_SCOPE,
+            'graphBaseUrl' => self::GRAPH_BASE_URL,
+            'usersEndpoint' => self::GRAPH_BASE_URL . '/users',
+            'memberOfEndpoint' => self::GRAPH_BASE_URL . '/users/{id}/memberOf',
+            'photoEndpoint' => self::GRAPH_BASE_URL . '/users/{id}/photo/$value',
+        ];
+    }
+
+    /**
+     * Returns the expiry timestamp of the currently cached app token for the
+     * client, or null when no (matching) token is cached.
+     */
+    public function getCachedTokenExpiry(GraphSyncConfiguration $config): ?int
+    {
+        $cached = $this->registry->get(self::REGISTRY_NAMESPACE, $this->tokenCacheKey($config));
+        if (is_array($cached)
+            && ($cached['client_id'] ?? null) === $config->clientId
+            && !empty($cached['expires_at'])
+        ) {
+            return (int)$cached['expires_at'];
+        }
+
+        return null;
+    }
+
+    /**
      * Returns the directory object IDs of the groups the given user is a member
      * of (used for group mapping via the `oauth2_id` column).
      *
@@ -186,17 +269,18 @@ class MicrosoftGraphClient
     }
 
     /**
+     * @param array<string, string> $extraHeaders
      * @return array<string, mixed>
      * @throws GraphApiException
      */
-    private function requestJson(string $url, string $token): array
+    private function requestJson(string $url, string $token, array $extraHeaders = []): array
     {
         try {
             $response = $this->requestFactory->request($url, 'GET', [
-                'headers' => [
+                'headers' => array_merge([
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ],
+                ], $extraHeaders),
             ]);
         } catch (\Throwable $e) {
             throw new GraphApiException('Microsoft Graph request failed for ' . $url . ': ' . $e->getMessage(), 1718450002, $e);
