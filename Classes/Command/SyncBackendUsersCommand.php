@@ -3,15 +3,18 @@
 namespace Xima\XimaOauth2Extended\Command;
 
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Xima\XimaOauth2Extended\Configuration\GraphSyncConfiguration;
 use Xima\XimaOauth2Extended\Service\BackendUserSyncService;
 
 /**
- * Syncs all backend users visible to the registered Azure application from
- * Microsoft Graph. Runnable from the CLI and as a schedulable command via the
- * TYPO3 Scheduler ("Execute console commands" task).
+ * Syncs backend users visible to the registered Azure application(s) from
+ * Microsoft Graph. Without arguments every configured graphSync client is
+ * synced; pass a client key to sync only that one. Runnable from the CLI and as
+ * a schedulable command via the TYPO3 Scheduler ("Execute console commands").
  */
 class SyncBackendUsersCommand extends Command
 {
@@ -24,28 +27,57 @@ class SyncBackendUsersCommand extends Command
     protected function configure(): void
     {
         $this->setDescription('Sync backend users from Microsoft Graph (app-only).');
+        $this->addArgument(
+            'client',
+            InputArgument::OPTIONAL,
+            'graphSync client key to sync. If omitted, all configured clients are synced.'
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
-        try {
-            $result = $this->syncService->sync();
-        } catch (\Throwable $e) {
-            $io->error($e->getMessage());
+        $configs = GraphSyncConfiguration::loadAll();
+        $clientKey = $input->getArgument('client');
+        if ($clientKey !== null) {
+            if (!isset($configs[$clientKey])) {
+                $io->error(sprintf('Unknown graphSync client "%s".', $clientKey));
+                return Command::FAILURE;
+            }
+            $configs = [$clientKey => $configs[$clientKey]];
+        }
+
+        if (empty($configs)) {
+            $io->error('No graphSync clients configured.');
             return Command::FAILURE;
         }
 
-        $io->success(sprintf(
-            'Backend user sync finished: %d created, %d updated, %d skipped, %d failed (%d processed).',
-            $result->created,
-            $result->updated,
-            $result->skipped,
-            $result->failed,
-            $result->total()
-        ));
+        $hasFailure = false;
+        foreach ($configs as $key => $config) {
+            try {
+                $result = $this->syncService->syncClient($config);
+            } catch (\Throwable $e) {
+                $io->error(sprintf('[%s] %s', $key, $e->getMessage()));
+                $hasFailure = true;
+                continue;
+            }
 
-        return $result->failed > 0 ? Command::FAILURE : Command::SUCCESS;
+            $io->success(sprintf(
+                '[%s] Backend user sync finished: %d created, %d updated, %d skipped, %d failed (%d processed).',
+                $key,
+                $result->created,
+                $result->updated,
+                $result->skipped,
+                $result->failed,
+                $result->total()
+            ));
+
+            if ($result->failed > 0) {
+                $hasFailure = true;
+            }
+        }
+
+        return $hasFailure ? Command::FAILURE : Command::SUCCESS;
     }
 }

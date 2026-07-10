@@ -3,7 +3,6 @@
 namespace Xima\XimaOauth2Extended\Service;
 
 use Psr\Log\LoggerInterface;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -12,12 +11,15 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Xima\XimaOauth2Extended\Configuration\GraphSyncConfiguration;
 use Xima\XimaOauth2Extended\Exception\OAuth2ConfigurationException;
 use Xima\XimaOauth2Extended\ResourceResolver\MicrosoftGraphSyncResolver;
-use Xima\XimaOauth2Extended\ResourceResolver\ResolverOptions;
 use Xima\XimaOauth2Extended\UserFactory\BackendUserFactory;
 
 /**
- * Bulk-syncs backend users from Microsoft Graph (app-only) by reusing the
- * existing BackendUserFactory pipeline.
+ * Bulk-syncs backend users from Microsoft Graph (app-only) for a single
+ * graphSync client by reusing the existing BackendUserFactory pipeline.
+ *
+ * Every client is self-contained: credentials, identity provider key and sync
+ * options all come from the {@see GraphSyncConfiguration} client, never from
+ * `oauth2_client_providers`.
  *
  * Idempotency: an existing identity link (provider + Graph object id) routes the
  * record to updateTypo3User(); only genuinely new identities go through
@@ -27,7 +29,6 @@ class BackendUserSyncService
 {
     public function __construct(
         private readonly MicrosoftGraphClient $graphClient,
-        private readonly ExtensionConfiguration $extensionConfiguration,
         private readonly ConnectionPool $connectionPool,
         private readonly LoggerInterface $logger,
     ) {
@@ -37,23 +38,21 @@ class BackendUserSyncService
      * @throws OAuth2ConfigurationException
      * @throws \Xima\XimaOauth2Extended\Exception\GraphApiException
      */
-    public function sync(): UserSyncResult
+    public function syncClient(GraphSyncConfiguration $config): UserSyncResult
     {
-        $config = GraphSyncConfiguration::create();
         if (!$config->isComplete()) {
             throw new OAuth2ConfigurationException(
-                'Incomplete graphSync extension configuration (tenantId, clientId, clientSecret and providerId are required).',
+                'Incomplete graphSync client "' . $config->key . '" (tenantId, clientId and clientSecret are required).',
                 1718450100
             );
         }
 
-        $options = $this->buildResolverOptions($config->providerId);
         $token = $this->graphClient->getAppAccessToken($config);
         $users = $this->graphClient->getUsers($config);
 
         $result = new UserSyncResult();
         foreach ($users as $graphUser) {
-            $this->syncUser($graphUser, $token, $options, $config->providerId, $result);
+            $this->syncUser($graphUser, $token, $config, $result);
         }
 
         return $result;
@@ -62,14 +61,14 @@ class BackendUserSyncService
     /**
      * @param array<string, mixed> $graphUser
      */
-    private function syncUser(array $graphUser, string $token, ResolverOptions $options, string $providerId, UserSyncResult $result): void
+    private function syncUser(array $graphUser, string $token, GraphSyncConfiguration $config, UserSyncResult $result): void
     {
-        $resolver = new MicrosoftGraphSyncResolver($graphUser, $token, $options, $this->graphClient);
-        $factory = new BackendUserFactory($resolver, $providerId, $this->logger);
+        $resolver = new MicrosoftGraphSyncResolver($graphUser, $token, $config->options, $this->graphClient);
+        $factory = new BackendUserFactory($resolver, $config->provider, $this->logger);
         $identifier = (string)$resolver->getRemoteUser()->getId();
 
         try {
-            $linkedUser = $this->findLinkedBackendUser($providerId, $identifier);
+            $linkedUser = $this->findLinkedBackendUser($config->provider, $identifier);
             if ($linkedUser !== null) {
                 $factory->updateTypo3User($linkedUser);
                 $result->updated++;
@@ -83,29 +82,22 @@ class BackendUserSyncService
                 $result->skipped++;
             }
         } catch (\Throwable $e) {
-            $this->logger->error('Failed to sync backend user (remote id: ' . $identifier . '): ' . $e->getMessage());
+            $this->logger->error('Failed to sync backend user (client: ' . $config->key . ', remote id: ' . $identifier . '): ' . $e->getMessage());
             $result->failed++;
         }
-    }
-
-    private function buildResolverOptions(string $providerId): ResolverOptions
-    {
-        $providerConfiguration = $this->extensionConfiguration->get('xima_oauth2_extended', 'oauth2_client_providers') ?? [];
-
-        return ResolverOptions::createFromExtensionConfiguration($providerConfiguration[$providerId] ?? []);
     }
 
     /**
      * @return array<string, mixed>|null
      */
-    private function findLinkedBackendUser(string $providerId, string $identifier): ?array
+    private function findLinkedBackendUser(string $provider, string $identifier): ?array
     {
         $qb = $this->getQueryBuilder('tx_oauth2_beuser_provider_configuration');
         $qb->getRestrictions()->removeAll();
         $parentId = $qb->select('parentid')
             ->from('tx_oauth2_beuser_provider_configuration')
             ->where(
-                $qb->expr()->eq('provider', $qb->createNamedParameter($providerId)),
+                $qb->expr()->eq('provider', $qb->createNamedParameter($provider)),
                 $qb->expr()->eq('identifier', $qb->createNamedParameter($identifier))
             )
             ->executeQuery()

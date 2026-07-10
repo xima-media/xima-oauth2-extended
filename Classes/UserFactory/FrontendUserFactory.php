@@ -82,10 +82,10 @@ class FrontendUserFactory
      * @param array<string, mixed> $typo3User
      * @return array<string, mixed>
      */
-    public function updateTypo3User(array $typo3User): array
+    public function updateTypo3User(array $typo3User, int $targetPid = 0): array
     {
         $this->resolver->updateFrontendUser($typo3User);
-        $this->createFrontendUserGroups();
+        $this->createFrontendUserGroups($targetPid);
         $this->updateFrontendUserGroups($typo3User);
         $this->saveUpdatedFrontendUser($typo3User);
 
@@ -125,7 +125,7 @@ class FrontendUserFactory
         }
 
         // create user groups
-        $this->createFrontendUserGroups();
+        $this->createFrontendUserGroups($targetPid);
 
         // update user groups
         $this->updateFrontendUserGroups($userRecord);
@@ -159,7 +159,7 @@ class FrontendUserFactory
         return $this->remoteGroupIds;
     }
 
-    protected function createFrontendUserGroups(): void
+    protected function createFrontendUserGroups(int $targetPid = 0): void
     {
         if (!$this->resolver->getOptions()->createFrontendUsergroups || !$this->resolver instanceof UserGroupResolverInterface) {
             return;
@@ -182,16 +182,16 @@ class FrontendUserFactory
             return;
         }
 
-        $insertValues = array_map(static function ($oauthId) {
-            return [time(), time(), $oauthId, $oauthId];
+        $insertValues = array_map(static function ($oauthId) use ($targetPid) {
+            return [$targetPid, time(), time(), $oauthId, $oauthId];
         }, $groupIdsToCreate);
 
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('fe_groups');
         $connection->bulkInsert(
             'fe_groups',
             $insertValues,
-            ['crdate', 'tstamp', 'title', 'oauth2_id'],
-            [Connection::PARAM_INT, Connection::PARAM_INT, Connection::PARAM_STR, Connection::PARAM_STR]
+            ['pid', 'crdate', 'tstamp', 'title', 'oauth2_id'],
+            [Connection::PARAM_INT, Connection::PARAM_INT, Connection::PARAM_INT, Connection::PARAM_STR, Connection::PARAM_STR]
         );
     }
 

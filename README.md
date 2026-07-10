@@ -104,67 +104,102 @@ Both backend and frontend users can be synced:
 * `xima:oauth2:sync-backend-users` → `be_users` (+ `be_groups`)
 * `xima:oauth2:sync-frontend-users` → `fe_users` (+ `fe_groups`)
 
+The sync supports **multiple clients/tenants**: `graphSync` is a map of
+independent client configurations, each keyed by an arbitrary client id. Every
+client is **fully self-contained** — credentials, identity-link key and sync
+options all live in the client entry and are **not** derived from
+`oauth2_client_providers`.
+
 ### Azure app registration
 
-Register an application in your Microsoft tenant and grant it the following
-**Application** permissions (admin consent required):
+Register an application in **each** Microsoft tenant you want to sync and grant
+it the following **Application** permissions (admin consent required):
 
 * `User.Read.All` — read all users
 * `GroupMember.Read.All` — read group membership (only needed for group sync)
 
-Create a client secret for the application.
+Create a client secret for each application.
 
 ### Extension configuration
 
-Configure the credentials under *Settings → Extension Configuration →
-xima_oauth2_extended* (category *graphSync*) or in `settings.php`:
+Configure the clients under *Settings → Extension Configuration →
+xima_oauth2_extended* or in `settings.php`. `graphSync` is a map keyed by client
+id (`customerA`, `customerB`, … — pick any stable key):
 
 ```php
 'EXTENSIONS' => [
     'xima_oauth2_extended' => [
         'graphSync' => [
-            'tenantId' => '<directory (tenant) id>',
-            'clientId' => '<application (client) id>',
-            'clientSecret' => '<client secret>',
-            // ID of an existing oauth2_client_providers entry. Its ResolverOptions
-            // (createBackendUser, default groups, admin groups, image storage, ...)
-            // and identity link are reused for the synced users.
-            'providerId' => 'yourProviderId',
-            // Frontend sync only: storage page for created fe_users.
-            'frontendUserPid' => 0,
+            'customerA' => [
+                // --- Azure app credentials ---
+                'tenantId' => '<directory (tenant) id>',
+                'clientId' => '<application (client) id>',
+                'clientSecret' => '<client secret>',
+                // Identity-link key written to the provider column of
+                // tx_oauth2_beuser/feuser_provider_configuration.
+                // Optional; defaults to the client key ('customerA').
+                'provider' => 'customerA',
+                // Storage page for created fe_users (and, on the frontend sync,
+                // for auto-created fe_groups).
+                'frontendUserPid' => 0,
+                // --- Sync options (self-contained, per client) ---
+                'createBackendUser' => true,
+                'createBackendUsergroups' => true,
+                'defaultBackendUsergroup' => '1,3',
+                'defaultBackendAdminGroups' => '',
+                'defaultBackendLanguage' => 'default',
+                'imageStorageBackendIdentifier' => '1:/user_upload/oauth',
+                'createFrontendUser' => true,
+                'createFrontendUsergroups' => true,
+                'defaultFrontendUsergroup' => '',
+            ],
+            'customerB' => [
+                'tenantId' => '...',
+                'clientId' => '...',
+                'clientSecret' => '...',
+                'frontendUserPid' => 42,
+                'createFrontendUser' => true,
+            ],
         ],
     ],
 ],
 ```
 
 Whether users are actually created and which groups they receive is governed by
-the [resolver options](#extended-resource-resolver-options) of the referenced
-`providerId`:
+each client's own options (same keys as the
+[resolver options](#extended-resource-resolver-options)):
 
 * Backend: `createBackendUser`, `defaultBackendUsergroup`,
-`createBackendUsergroups`, `defaultBackendAdminGroups`
+  `createBackendUsergroups`, `defaultBackendAdminGroups`
 * Frontend: `createFrontendUser`, `defaultFrontendUsergroup`,
-`createFrontendUsergroups`
+  `createFrontendUsergroups`
 
-Frontend users are created on the page configured via `graphSync.frontendUserPid`.
+Frontend users **and** auto-created frontend groups are stored on the page
+configured via the client's `frontendUserPid`.
 
 ### Running the sync
 
 ```bash
-# backend users (+ be_groups)
+# all configured clients
 vendor/bin/typo3 xima:oauth2:sync-backend-users
-
-# frontend users (+ fe_groups)
 vendor/bin/typo3 xima:oauth2:sync-frontend-users
+
+# a single client (by its graphSync key)
+vendor/bin/typo3 xima:oauth2:sync-backend-users customerA
+vendor/bin/typo3 xima:oauth2:sync-frontend-users customerA
 ```
 
-Both commands are also schedulable: in the *Scheduler* backend module add an
-*Execute console commands* task for the respective command.
+Without an argument every configured client is synced in turn, with a separate
+result line per client; one client's failure does not abort the others. Both
+commands are also schedulable: in the *Scheduler* backend module add an *Execute
+console commands* task for the respective command (optionally with a client key
+as argument).
 
 The application access token is acquired via the client-credentials grant and
-cached in `sys_registry` (`xima_oauth2_extended` / `graphAppToken`). The grant
-issues no refresh token, so the token is simply re-acquired once it expires —
-there is no separate token-refresh task.
+cached per client in `sys_registry` (`xima_oauth2_extended` /
+`graphAppToken_<clientId>_<tenantId>`). The grant issues no refresh token, so the
+token is simply re-acquired once it expires — there is no separate token-refresh
+task.
 
 > **Note on identity matching:** the login flow links identities using the
 > id_token `sub` claim, while the app-only `/users` endpoint only exposes the

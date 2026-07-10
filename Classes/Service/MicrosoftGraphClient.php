@@ -50,12 +50,12 @@ class MicrosoftGraphClient
     {
         if (!$config->isComplete()) {
             throw new OAuth2ConfigurationException(
-                'Incomplete graphSync extension configuration (tenantId, clientId, clientSecret and providerId are required).',
+                'Incomplete graphSync client "' . $config->key . '" (tenantId, clientId and clientSecret are required).',
                 1718450000
             );
         }
 
-        $cached = $this->registry->get(self::REGISTRY_NAMESPACE, self::REGISTRY_TOKEN_KEY);
+        $cached = $this->registry->get(self::REGISTRY_NAMESPACE, $this->tokenCacheKey($config));
         if (is_array($cached)
             && ($cached['client_id'] ?? null) === $config->clientId
             && !empty($cached['access_token'])
@@ -65,6 +65,15 @@ class MicrosoftGraphClient
         }
 
         return $this->acquireAndCacheToken($config);
+    }
+
+    /**
+     * Per-client registry key so tokens for different tenants/clients do not
+     * evict each other.
+     */
+    private function tokenCacheKey(GraphSyncConfiguration $config): string
+    {
+        return self::REGISTRY_TOKEN_KEY . '_' . $config->clientId . '_' . $config->tenantId;
     }
 
     /**
@@ -167,7 +176,7 @@ class MicrosoftGraphClient
         // conservative 30 minutes if the provider omits it.
         $expiresAt = $accessToken->getExpires() ?? (time() + 1800);
 
-        $this->registry->set(self::REGISTRY_NAMESPACE, self::REGISTRY_TOKEN_KEY, [
+        $this->registry->set(self::REGISTRY_NAMESPACE, $this->tokenCacheKey($config), [
             'client_id' => $config->clientId,
             'access_token' => $token,
             'expires_at' => $expiresAt,
