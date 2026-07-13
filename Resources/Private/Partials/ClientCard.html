@@ -1,18 +1,12 @@
 <html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
-      data-namespace-typo3-fluid="true">
+    data-namespace-typo3-fluid="true">
 <div class="card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span>
-            <strong>{client.key}</strong>
-            <f:if condition="{client.complete}">
-                <f:then><span class="badge badge-success">complete</span></f:then>
-                <f:else><span class="badge badge-warning">incomplete</span></f:else>
-            </f:if>
-        </span>
-        <span>
-            <a class="btn btn-sm btn-default" href="{client.links.test}">Test connection</a>
-            <a class="btn btn-sm btn-default" href="{client.links.search}">Search users</a>
-        </span>
+    <div class="card-header">
+        <strong>{client.key}</strong>
+        <f:if condition="{client.complete}">
+            <f:then><span class="badge badge-success">complete</span></f:then>
+            <f:else><span class="badge badge-warning">incomplete</span></f:else>
+        </f:if>
     </div>
     <div class="card-body">
         <div class="row">

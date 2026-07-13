@@ -60,6 +60,36 @@ class FrontendUserSyncService
     }
 
     /**
+     * Imports a single user (by Graph object id) on demand, e.g. from the
+     * backend module. Creation is forced regardless of the client's
+     * createFrontendUser option, since it is an explicit manual action.
+     *
+     * @throws OAuth2ConfigurationException
+     * @throws \Xima\XimaOauth2Extended\Exception\GraphApiException
+     */
+    public function importUser(GraphSyncConfiguration $config, string $userId): UserSyncResult
+    {
+        if (!$config->isComplete()) {
+            throw new OAuth2ConfigurationException(
+                'Incomplete graphSync client "' . $config->key . '" (tenantId, clientId and clientSecret are required).',
+                1718450201
+            );
+        }
+
+        $token = $this->graphClient->getAppAccessToken($config);
+        $graphUser = $this->graphClient->getUser($config, $userId);
+
+        $forced = clone $config;
+        $forced->options = clone $config->options;
+        $forced->options->createFrontendUser = true;
+
+        $result = new UserSyncResult();
+        $this->syncUser($graphUser, $token, $forced, $result);
+
+        return $result;
+    }
+
+    /**
      * @param array<string, mixed> $graphUser
      */
     private function syncUser(array $graphUser, string $token, GraphSyncConfiguration $config, UserSyncResult $result): void

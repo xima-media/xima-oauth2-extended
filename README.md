@@ -218,20 +218,27 @@ task.
 > as identifier. The underlying `be_users` record is still matched by
 > username/email, so a synced user that later logs in resolves to the same user.
 
-### Backend module (debugging)
+### Backend module
 
-An admin-only backend module **Admin Tools → Entra / Graph Debug** helps explore
-and debug the configured Graph endpoints. It is read-only (it never creates or
-changes users) and provides, per `graphSync` client:
+An admin-only backend module **Admin Tools → Microsoft Entra** helps browse,
+inspect and manually import the configured tenants' users. It is only registered
+when at least one `graphSync` client is configured, and a doc-header dropdown
+switches between the configured clients (shown when more than one exists). Per
+client it provides:
 
-* **Configuration overview** — credentials (secret masked), identity provider,
-frontend PID, all sync options and the concrete Graph endpoints used.
-* **Test connection** — acquires an app-only token and reads a few sample users
-to confirm the credentials and permissions work.
-* **User search** — search the tenant by name / UPN / mail.
+* **Users** — a searchable list of remote users showing, for each, whether it is
+  already imported as a `be_user` / `fe_user` (identity link) or merely exists
+  (matched by username/email), with **Create BE user** / **Create FE user**
+  buttons. Import is idempotent — an existing user is linked/updated, never
+  duplicated — and the buttons force creation regardless of the client's
+  `createBackendUser` / `createFrontendUser` option (explicit manual action).
 * **User detail & mapping** — the raw Graph user next to the resolved TYPO3
-mapping (intended username/email, `be_users`/`fe_users` fields, and each
-group membership matched against the `oauth2_id` column).
+  mapping (intended username/email, `be_users`/`fe_users` fields, and each group
+  membership — with names and Entra hierarchy — matched against `oauth2_id`).
+* **Configuration** — credentials (secret masked), identity provider, frontend
+  PID, all sync options and the concrete Graph endpoints used.
+* **Test connection** — acquires an app-only token and reads a few sample users
+  to confirm the credentials and permissions work.
 
 ## FAQ
 
