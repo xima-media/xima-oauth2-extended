@@ -177,6 +177,17 @@ each client's own options (same keys as the
 Frontend users **and** auto-created frontend groups are stored on the page
 configured via the client's `frontendUserPid`.
 
+#### Group names & hierarchy
+
+Synced groups are created with their **Entra display name** as the TYPO3 group
+title (the object id is kept in `oauth2_id` for matching, and titles are
+refreshed when they change in Entra). Group membership is resolved via
+`transitiveMemberOf`, so users are also assigned to the **nested parent groups**
+they inherit through Entra group nesting — not just their direct groups. That
+nesting is reconstructed into the TYPO3 `subgroup` field (a child group lists its
+parents as subgroups). Reading nested membership uses the existing
+`GroupMember.Read.All` permission.
+
 ### Running the sync
 
 ```bash

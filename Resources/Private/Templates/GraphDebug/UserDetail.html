@@ -1,0 +1,101 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      data-namespace-typo3-fluid="true">
+<f:layout name="Module"/>
+
+<f:section name="Content">
+    <h1>User detail &amp; mapping &mdash; {client.key}</h1>
+    <p><a class="btn btn-default btn-sm" href="{backLink}">&larr; Back to search</a></p>
+
+    <f:if condition="{error}">
+        <div class="alert alert-danger"><code>{error}</code></div>
+    </f:if>
+
+    <f:if condition="{graphUser}">
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Graph user</h2>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr><th>id</th><td><code>{graphUser.id}</code></td></tr>
+                        <tr><th>displayName</th><td>{graphUser.displayName}</td></tr>
+                        <tr><th>userPrincipalName</th><td>{graphUser.userPrincipalName}</td></tr>
+                        <tr><th>mail</th><td>{graphUser.mail}</td></tr>
+                        <tr><th>givenName</th><td>{graphUser.givenName}</td></tr>
+                        <tr><th>surname</th><td>{graphUser.surname}</td></tr>
+                        <tr><th>accountEnabled</th><td><f:render partial="Bool" arguments="{value:graphUser.accountEnabled}"/></td></tr>
+                        <tr><th>jobTitle</th><td>{graphUser.jobTitle}</td></tr>
+                        <tr><th>department</th><td>{graphUser.department}</td></tr>
+                    </tbody>
+                </table>
+                <h3>Raw JSON</h3>
+                <pre style="max-height:340px; overflow:auto">{graphUserJson}</pre>
+            </div>
+            <div class="col-md-6">
+                <h2>TYPO3 mapping</h2>
+                <p class="text-muted">
+                    Resolved for identity provider <code>{client.provider}</code>.
+                    Read-only preview &mdash; nothing is written.
+                </p>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr><th>Intended username</th><td><code>{mapping.intendedUsername}</code></td></tr>
+                        <tr><th>Intended email</th><td><code>{mapping.intendedEmail}</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h3>be_users fields</h3>
+                <table class="table table-sm">
+                    <tbody>
+                        <f:for each="{mapping.backend}" as="value" key="field">
+                            <tr><th>{field}</th><td>{value}</td></tr>
+                        </f:for>
+                    </tbody>
+                </table>
+
+                <h3>fe_users fields</h3>
+                <table class="table table-sm">
+                    <tbody>
+                        <f:for each="{mapping.frontend}" as="value" key="field">
+                            <tr><th>{field}</th><td>{value}</td></tr>
+                        </f:for>
+                    </tbody>
+                </table>
+
+                <h3>Group membership (<f:count subject="{mapping.remoteGroupIds}"/>, incl. nested)</h3>
+                <p class="text-muted">Resolved via <code>transitiveMemberOf</code>, so nested parent groups are included.</p>
+
+                <f:if condition="{mapping.groupHierarchy}">
+                    <h4>Hierarchy (Entra nesting)</h4>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr><th>Group</th><th>Member of (parents)</th></tr>
+                        </thead>
+                        <tbody>
+                            <f:for each="{mapping.groupHierarchy}" as="node">
+                                <tr>
+                                    <td>{node.title}</td>
+                                    <td>
+                                        <f:if condition="{node.parents}">
+                                            <f:then>
+                                                <f:for each="{node.parents}" as="parent">
+                                                    <span class="badge badge-info">{parent.title}</span>
+                                                </f:for>
+                                            </f:then>
+                                            <f:else><span class="text-muted">&mdash;</span></f:else>
+                                        </f:if>
+                                    </td>
+                                </tr>
+                            </f:for>
+                        </tbody>
+                    </table>
+                </f:if>
+
+                <h4>be_groups</h4>
+                <f:render partial="GroupMatch" arguments="{groups: mapping.backendGroups, flag: 'createBackendUsergroups'}"/>
+                <h4>fe_groups</h4>
+                <f:render partial="GroupMatch" arguments="{groups: mapping.frontendGroups, flag: 'createFrontendUsergroups'}"/>
+            </div>
+        </div>
+    </f:if>
+</f:section>
+</html>

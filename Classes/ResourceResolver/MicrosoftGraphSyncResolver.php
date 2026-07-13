@@ -15,9 +15,12 @@ use Xima\XimaOauth2Extended\Service\MicrosoftGraphClient;
  * mail, displayName, accountEnabled vs. email, name, picture), which is why the
  * field mapping lives here rather than being reused.
  */
-class MicrosoftGraphSyncResolver implements ResourceResolverInterface, UserGroupResolverInterface, ProfileImageResolverInterface
+class MicrosoftGraphSyncResolver implements ResourceResolverInterface, UserGroupResolverInterface, UserGroupDetailsResolverInterface, ProfileImageResolverInterface
 {
     private readonly GenericResourceOwner $remoteUser;
+
+    /** @var RemoteGroup[]|null */
+    private ?array $groupCache = null;
 
     /**
      * @param array<string, mixed> $graphUser raw record from GET /users
@@ -81,7 +84,24 @@ class MicrosoftGraphSyncResolver implements ResourceResolverInterface, UserGroup
 
     public function resolveUserGroups(): ?array
     {
-        return $this->graphClient->getUserGroupIds((string)$this->remoteUser->getId(), $this->appAccessToken);
+        return array_map(static fn (RemoteGroup $group) => $group->id, $this->loadGroups());
+    }
+
+    public function resolveUserGroupDetails(): ?array
+    {
+        return $this->loadGroups();
+    }
+
+    /**
+     * @return RemoteGroup[]
+     */
+    private function loadGroups(): array
+    {
+        return $this->groupCache ??= $this->graphClient->getUserGroups(
+            (string)$this->remoteUser->getId(),
+            $this->appAccessToken,
+            true
+        );
     }
 
     public function resolveProfileImage(): ?string

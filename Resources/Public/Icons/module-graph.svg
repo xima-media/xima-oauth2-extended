@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64px" height="64px" viewBox="0 0 64 64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>module-gem</title>
+    <g id="module-gem" stroke="none" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" fill="#C5EBFF" x="0" y="0" width="64" height="64"></rect>
+        <g id="Module" stroke-width="1" transform="translate(14.9, 17.2)">
+            <polygon id="Path" fill="#2C93DA" points="8.55 2.17273399e-15 25.65 2.17273399e-15 21.0696429 7.8892562"></polygon>
+            <polygon id="Path" fill="#35A8E4" points="25.65 0 34.2 14.8 21.0696429 7.8892562"></polygon>
+            <polygon id="Path" fill="#2685D0" points="8.55 0 21.0696429 7.8892562 9.16071429 14.8"></polygon>
+            <polygon id="Path" fill="#1F79C6" points="8.55 0 9.16071429 14.8 0 14.8"></polygon>
+            <polygon id="Path" fill="#1868B4" points="0 14.8 9.16071429 14.8 8.55 29.6"></polygon>
+            <polygon id="Path" fill="#3AB0EA" points="34.2 14.8 21.0696429 7.8892562 21.0696429 21.7107438"></polygon>
+            <polygon id="Path" fill="#135FA8" points="34.2 14.8 21.0696429 21.7107438 25.65 29.6"></polygon>
+            <polygon id="Path" fill="#0F5497" points="9.16071429 14.8 21.0696429 21.7107438 8.55 29.6"></polygon>
+            <polygon id="Path" fill="#0D4E92" points="8.55 29.6 21.0696429 21.7107438 25.65 29.6"></polygon>
+            <polygon id="Path" fill="#55C6F5" points="21.0696429 7.8892562 21.0696429 21.7107438 9.16071429 14.8"></polygon>
+        </g>
+    </g>
+</svg>

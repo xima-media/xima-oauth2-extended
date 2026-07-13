@@ -1,0 +1,31 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      data-namespace-typo3-fluid="true">
+<f:if condition="{groups}">
+    <f:then>
+        <table class="table table-sm">
+            <thead>
+                <tr><th>Entra group</th><th>TYPO3 group</th></tr>
+            </thead>
+            <tbody>
+                <f:for each="{groups}" as="group">
+                    <tr>
+                        <td>
+                            <strong>{group.remoteTitle}</strong>
+                            <div><code class="text-muted">{group.oauth2_id}</code></div>
+                        </td>
+                        <td>
+                            <f:if condition="{group.exists}">
+                                <f:then><span class="badge badge-success">[{group.uid}]</span> {group.title}</f:then>
+                                <f:else><span class="text-muted">not present &mdash; created on sync if <code>{flag}</code> is enabled</span></f:else>
+                            </f:if>
+                        </td>
+                    </tr>
+                </f:for>
+            </tbody>
+        </table>
+    </f:then>
+    <f:else>
+        <p class="text-muted">No group memberships returned (or <code>GroupMember.Read.All</code> not granted).</p>
+    </f:else>
+</f:if>
+</html>

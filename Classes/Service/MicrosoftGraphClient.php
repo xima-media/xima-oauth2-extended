@@ -10,6 +10,7 @@ use TYPO3\CMS\Core\Registry;
 use Xima\XimaOauth2Extended\Configuration\GraphSyncConfiguration;
 use Xima\XimaOauth2Extended\Exception\GraphApiException;
 use Xima\XimaOauth2Extended\Exception\OAuth2ConfigurationException;
+use Xima\XimaOauth2Extended\ResourceResolver\RemoteGroup;
 
 /**
  * App-only (client credentials) Microsoft Graph client used for bulk user sync.
@@ -31,6 +32,14 @@ class MicrosoftGraphClient
 
     private const GRAPH_SCOPE = 'https://graph.microsoft.com/.default';
     private const GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
+
+    /**
+     * Per-run cache of group parent lookups (group id => parent group ids), so
+     * each group's hierarchy is resolved once across a whole sync run.
+     *
+     * @var array<string, string[]>
+     */
+    private array $groupParentCache = [];
 
     public function __construct(
         private readonly Registry $registry,
@@ -187,28 +196,78 @@ class MicrosoftGraphClient
     }
 
     /**
-     * Returns the directory object IDs of the groups the given user is a member
-     * of (used for group mapping via the `oauth2_id` column).
+     * Returns the groups the given user is a member of, including nested
+     * (transitive) memberships, with display names and — optionally — the Entra
+     * nesting (each group's parent groups). Used for group mapping via the
+     * `oauth2_id` column.
      *
-     * @return string[]
+     * `transitiveMemberOf` flattens nested group memberships, so a user is
+     * mapped to parent groups it inherits through nesting, not just its direct
+     * groups.
+     *
+     * @return RemoteGroup[]
      * @throws GraphApiException
      */
-    public function getUserGroupIds(string $userId, string $token): array
+    public function getUserGroups(string $userId, string $token, bool $withHierarchy = false): array
     {
-        $url = self::GRAPH_BASE_URL . '/users/' . rawurlencode($userId) . '/memberOf?$select=id';
+        $url = self::GRAPH_BASE_URL . '/users/' . rawurlencode($userId)
+            . '/transitiveMemberOf/microsoft.graph.group?$select=id,displayName&$top=999';
 
-        $groupIds = [];
+        $names = [];
         while ($url !== null) {
             $page = $this->requestJson($url, $token);
             foreach ($page['value'] ?? [] as $group) {
                 if (!empty($group['id'])) {
-                    $groupIds[] = (string)$group['id'];
+                    $names[(string)$group['id']] = (string)($group['displayName'] ?? $group['id']);
                 }
             }
             $url = $page['@odata.nextLink'] ?? null;
         }
 
-        return $groupIds;
+        $knownIds = array_keys($names);
+        $groups = [];
+        foreach ($names as $id => $title) {
+            $parentIds = [];
+            if ($withHierarchy) {
+                // Restrict parents to groups the user actually has. Because
+                // transitiveMemberOf already includes all ancestors, this only
+                // guards against unexpected non-group parents.
+                $parentIds = array_values(array_intersect($this->getGroupParentIds((string)$id, $token), $knownIds));
+            }
+            $groups[] = new RemoteGroup((string)$id, $title, $parentIds);
+        }
+
+        return $groups;
+    }
+
+    /**
+     * Returns the directory object ids of the groups the given group is a direct
+     * member of (its parents). Cached per run so each group is resolved once.
+     *
+     * @return string[]
+     * @throws GraphApiException
+     */
+    private function getGroupParentIds(string $groupId, string $token): array
+    {
+        if (isset($this->groupParentCache[$groupId])) {
+            return $this->groupParentCache[$groupId];
+        }
+
+        $url = self::GRAPH_BASE_URL . '/groups/' . rawurlencode($groupId)
+            . '/memberOf/microsoft.graph.group?$select=id&$top=999';
+
+        $parents = [];
+        while ($url !== null) {
+            $page = $this->requestJson($url, $token);
+            foreach ($page['value'] ?? [] as $group) {
+                if (!empty($group['id'])) {
+                    $parents[] = (string)$group['id'];
+                }
+            }
+            $url = $page['@odata.nextLink'] ?? null;
+        }
+
+        return $this->groupParentCache[$groupId] = $parents;
     }
 
     /**

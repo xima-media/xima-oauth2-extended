@@ -16,7 +16,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2FeUserProviderConfigurationRestriction;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
+use Xima\XimaOauth2Extended\ResourceResolver\UserGroupDetailsResolverInterface;
 use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
+use Xima\XimaOauth2Extended\Service\RemoteGroupWriter;
 
 class FrontendUserFactory
 {
@@ -162,6 +164,16 @@ class FrontendUserFactory
     protected function createFrontendUserGroups(int $targetPid = 0): void
     {
         if (!$this->resolver->getOptions()->createFrontendUsergroups || !$this->resolver instanceof UserGroupResolverInterface) {
+            return;
+        }
+
+        // Rich path: create groups with their real names and reconstruct the
+        // Entra hierarchy into the subgroup field.
+        if ($this->resolver instanceof UserGroupDetailsResolverInterface) {
+            $details = $this->resolver->resolveUserGroupDetails();
+            if (!empty($details)) {
+                (new RemoteGroupWriter('fe_groups'))->persist($details, $targetPid);
+            }
             return;
         }
 

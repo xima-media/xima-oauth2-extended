@@ -1,0 +1,44 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      data-namespace-typo3-fluid="true">
+<f:layout name="Module"/>
+
+<f:section name="Content">
+    <h1>Test connection &mdash; {client.key}</h1>
+    <p><a class="btn btn-default btn-sm" href="{backLink}">&larr; Back to overview</a></p>
+
+    <f:if condition="{test.ok}">
+        <f:then>
+            <div class="alert alert-success">
+                <strong>Success.</strong> Acquired an app-only access token and read
+                {test.sampleCount} sample user(s) from the Graph <code>/users</code> endpoint.
+            </div>
+            <f:if condition="{test.sample}">
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>displayName</th><th>userPrincipalName</th><th>mail</th><th>enabled</th></tr>
+                    </thead>
+                    <tbody>
+                        <f:for each="{test.sample}" as="u">
+                            <tr>
+                                <td>{u.displayName}</td>
+                                <td>{u.userPrincipalName}</td>
+                                <td>{u.mail}</td>
+                                <td><f:render partial="Bool" arguments="{value:u.accountEnabled}"/></td>
+                            </tr>
+                        </f:for>
+                    </tbody>
+                </table>
+            </f:if>
+        </f:then>
+        <f:else>
+            <div class="alert alert-danger">
+                <strong>Connection failed.</strong>
+                <div><code>{test.error}</code></div>
+            </div>
+        </f:else>
+    </f:if>
+
+    <h2>Configuration</h2>
+    <f:render partial="ClientCard" arguments="{client: client}"/>
+</f:section>
+</html>

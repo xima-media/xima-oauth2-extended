@@ -217,7 +217,22 @@ class GraphDebugController
         $frontend = [];
         $resolver->updateFrontendUser($frontend);
 
-        $remoteGroupIds = $resolver->resolveUserGroups() ?? [];
+        $groupDetails = $resolver->resolveUserGroupDetails() ?? [];
+        $titleById = [];
+        foreach ($groupDetails as $group) {
+            $titleById[$group->id] = $group->title;
+        }
+
+        $hierarchy = [];
+        foreach ($groupDetails as $group) {
+            $parents = [];
+            foreach ($group->parentIds as $parentId) {
+                $parents[] = ['id' => $parentId, 'title' => $titleById[$parentId] ?? $parentId];
+            }
+            $hierarchy[] = ['id' => $group->id, 'title' => $group->title, 'parents' => $parents];
+        }
+
+        $remoteGroupIds = array_keys($titleById);
 
         return [
             'intendedUsername' => $resolver->getIntendedUsername(),
@@ -225,8 +240,9 @@ class GraphDebugController
             'backend' => $backend,
             'frontend' => $frontend,
             'remoteGroupIds' => $remoteGroupIds,
-            'backendGroups' => $this->matchGroups('be_groups', $remoteGroupIds),
-            'frontendGroups' => $this->matchGroups('fe_groups', $remoteGroupIds),
+            'groupHierarchy' => $hierarchy,
+            'backendGroups' => $this->matchGroups('be_groups', $remoteGroupIds, $titleById),
+            'frontendGroups' => $this->matchGroups('fe_groups', $remoteGroupIds, $titleById),
         ];
     }
 
@@ -235,9 +251,10 @@ class GraphDebugController
      * group table.
      *
      * @param string[] $groupIds
+     * @param array<string, string> $titleById remote display names keyed by id
      * @return array<int, array<string, mixed>>
      */
-    private function matchGroups(string $table, array $groupIds): array
+    private function matchGroups(string $table, array $groupIds, array $titleById = []): array
     {
         if ($groupIds === []) {
             return [];
@@ -260,6 +277,7 @@ class GraphDebugController
         foreach ($groupIds as $groupId) {
             $result[] = [
                 'oauth2_id' => $groupId,
+                'remoteTitle' => $titleById[$groupId] ?? '',
                 'uid' => $byOauthId[$groupId]['uid'] ?? null,
                 'title' => $byOauthId[$groupId]['title'] ?? null,
                 'exists' => isset($byOauthId[$groupId]),

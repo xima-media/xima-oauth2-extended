@@ -1,0 +1,58 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      data-namespace-typo3-fluid="true">
+<f:layout name="Module"/>
+
+<f:section name="Content">
+    <h1>Search users &mdash; {client.key}</h1>
+    <p><a class="btn btn-default btn-sm" href="{backLink}">&larr; Back to overview</a></p>
+
+    <form method="post" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control" value="{query}"
+                   placeholder="Display name, userPrincipalName or mail&hellip;"/>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+        <small class="form-text text-muted">
+            Uses the Graph <code>$search</code> parameter. An empty query lists the first 25 users.
+        </small>
+    </form>
+
+    <f:if condition="{error}">
+        <div class="alert alert-danger"><code>{error}</code></div>
+    </f:if>
+
+    <f:if condition="{searched}">
+        <f:if condition="{rows}">
+            <f:then>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>displayName</th>
+                            <th>userPrincipalName</th>
+                            <th>mail</th>
+                            <th>enabled</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <f:for each="{rows}" as="row">
+                            <tr>
+                                <td>{row.user.displayName}</td>
+                                <td>{row.user.userPrincipalName}</td>
+                                <td>{row.user.mail}</td>
+                                <td><f:render partial="Bool" arguments="{value:row.user.accountEnabled}"/></td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-default" href="{row.detailLink}">Details &amp; mapping</a>
+                                </td>
+                            </tr>
+                        </f:for>
+                    </tbody>
+                </table>
+            </f:then>
+            <f:else>
+                <div class="alert alert-info">No users found.</div>
+            </f:else>
+        </f:if>
+    </f:if>
+</f:section>
+</html>

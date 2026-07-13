@@ -13,7 +13,9 @@ use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
 use Xima\XimaOauth2Extended\ResourceResolver\ProfileImageResolverInterface;
+use Xima\XimaOauth2Extended\ResourceResolver\UserGroupDetailsResolverInterface;
 use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
+use Xima\XimaOauth2Extended\Service\RemoteGroupWriter;
 
 class BackendUserFactory extends AbstractUserFactory
 {
@@ -71,6 +73,16 @@ class BackendUserFactory extends AbstractUserFactory
     private function createUserGroups(): void
     {
         if (!$this->resolver->getOptions()->createBackendUsergroups || !$this->resolver instanceof UserGroupResolverInterface) {
+            return;
+        }
+
+        // Rich path: create groups with their real names and reconstruct the
+        // Entra hierarchy into the subgroup field.
+        if ($this->resolver instanceof UserGroupDetailsResolverInterface) {
+            $details = $this->resolver->resolveUserGroupDetails();
+            if (!empty($details)) {
+                (new RemoteGroupWriter('be_groups'))->persist($details, 0);
+            }
             return;
         }
 
