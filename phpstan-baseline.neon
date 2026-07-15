@@ -103,6 +103,18 @@ parameters:
 			path: Classes/ResourceResolver/ResourceResolverInterface.php
 
 		-
+			message: '#^Offset ''uid'' might not exist on array\{subgroup\: string\}\|array\{uid\: int, title\: string, subgroup\: string\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 3
+			path: Classes/Service/RemoteGroupWriter.php
+
+		-
+			message: '#^Parameter \#2 \$byOauthId of method Xima\\XimaOauth2Extended\\Service\\RemoteGroupWriter\:\:dispatchGroupEvents\(\) expects array\<string, array\{uid\: int, title\: string, subgroup\: string\}\>, non\-empty\-array\<string, array\{subgroup\: string\}\|array\{uid\: int, title\: string, subgroup\: string\}\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: Classes/Service/RemoteGroupWriter.php
+
+		-
 			message: '#^Attribute class JetBrains\\PhpStorm\\ArrayShape does not exist\.$#'
 			identifier: attribute.notFound
 			count: 1

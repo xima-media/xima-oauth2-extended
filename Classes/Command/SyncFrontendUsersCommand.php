@@ -65,13 +65,15 @@ class SyncFrontendUsersCommand extends Command
             }
 
             $io->success(sprintf(
-                '[%s] Frontend user sync finished: %d created, %d updated, %d skipped, %d failed (%d processed).',
+                '[%s] Frontend user sync finished: %d created, %d updated, %d skipped, %d failed (%d processed); %d disabled, %d deleted (orphaned).',
                 $key,
                 $result->created,
                 $result->updated,
                 $result->skipped,
                 $result->failed,
-                $result->total()
+                $result->total(),
+                $result->disabled,
+                $result->deleted
             ));
 
             if ($result->failed > 0) {

@@ -90,6 +90,7 @@ The extension provides customizable options to tailor the resolver's behavior:
 | `imageStorageFrontendIdentifier` | Storage identifier for downloaded frontend user profile images                                        | `1:/user_upload/oauth`           |
 | `defaultBackendLanguage`         | Language identifier for created backend users                                                         | `default`                        |
 | `defaultBackendAdminGroups`      | Comma separated list of remote `oauth2_id`s that will become Admin during login. Special value `all`. | ` `                              |
+| `orphanedUserAction`             | Graph sync only: what to do with a user still linked to the client but gone from Entra. `none` / `disable` / `delete`. See *Removing users who left Entra*. | `none`                           |
 
 ## User sync via Microsoft Graph (app-only)
 
@@ -218,6 +219,44 @@ task.
 > as identifier. The underlying `be_users` record is still matched by
 > username/email, so a synced user that later logs in resolves to the same user.
 
+### Removing users who left Entra
+
+By default the sync is purely additive — a user that disappears from Entra is
+left untouched in TYPO3. Set the per-client `orphanedUserAction` option to have
+the sync reconcile departures:
+
+| Value | Effect on a linked user no longer in Entra |
+|-------|--------------------------------------------|
+| `none` (default) | left untouched |
+| `disable` | `disable = 1` — reversible in the backend |
+| `delete` | `deleted = 1` — soft-deleted, recoverable via the recycler |
+
+Reconciliation runs only during a **full client sync** (`syncClient`), never for
+the manual single-user import, and applies to both backend and frontend users of
+the client. It is deliberately conservative — mistakenly removing an active
+account is far worse than keeping a stale one — so it:
+
+* **never acts on an empty Graph result** (a revoked permission or throttled
+request must not look like "the whole directory is gone");
+* **only considers identity links keyed by an Entra object id (GUID)** — logins
+link by the id_token `sub` claim, a different id space the app-only `/users`
+listing never returns, so interactively logged-in users are never mistaken for
+departed ones;
+* **never touches backend admin accounts**;
+* is idempotent (a user already disabled/deleted is skipped).
+
+Each reconciled user emits a `BackendUserOrphanedEvent` / `FrontendUserOrphanedEvent`
+(see below), so third-party data can be cleaned up in the same pass.
+
+> **Groups are not reconciled.** The sync only ever reads the groups the current
+> users belong to (`transitiveMemberOf`), never the full tenant group list, so
+> "not seen this run" does not mean "removed from Entra". Pruning stale groups
+> would require a separate tenant-wide group enumeration and is out of scope.
+
+> **Disabled vs. deleted in Entra:** a user *disabled* (not deleted) in Entra is
+> still returned by `/users` (with `accountEnabled: false`), so absence-based
+> reconciliation only catches accounts actually removed from the directory.
+
 ### Backend module
 
 An admin-only backend module **Admin Tools → Microsoft Entra** helps browse,
@@ -227,18 +266,18 @@ switches between the configured clients (shown when more than one exists). Per
 client it provides:
 
 * **Users** — a searchable list of remote users showing, for each, whether it is
-  already imported as a `be_user` / `fe_user` (identity link) or merely exists
-  (matched by username/email), with **Create BE user** / **Create FE user**
-  buttons. Import is idempotent — an existing user is linked/updated, never
-  duplicated — and the buttons force creation regardless of the client's
-  `createBackendUser` / `createFrontendUser` option (explicit manual action).
+already imported as a `be_user` / `fe_user` (identity link) or merely exists
+(matched by username/email), with **Create BE user** / **Create FE user**
+buttons. Import is idempotent — an existing user is linked/updated, never
+duplicated — and the buttons force creation regardless of the client's
+`createBackendUser` / `createFrontendUser` option (explicit manual action).
 * **User detail & mapping** — the raw Graph user next to the resolved TYPO3
-  mapping (intended username/email, `be_users`/`fe_users` fields, and each group
-  membership — with names and Entra hierarchy — matched against `oauth2_id`).
+mapping (intended username/email, `be_users`/`fe_users` fields, and each group
+membership — with names and Entra hierarchy — matched against `oauth2_id`).
 * **Configuration** — credentials (secret masked), identity provider, frontend
-  PID, all sync options and the concrete Graph endpoints used.
+PID, all sync options and the concrete Graph endpoints used.
 * **Test connection** — acquires an app-only token and reads a few sample users
-  to confirm the credentials and permissions work.
+to confirm the credentials and permissions work.
 
 ## Reacting to sync (PSR-14 events)
 
@@ -258,15 +297,21 @@ sync (rich group path).
 | `Event\FrontendUserUpdatedEvent` | an existing linked frontend user was updated |
 | `Event\UserGroupCreatedEvent` | a new TYPO3 group was created from a remote group |
 | `Event\UserGroupUpdatedEvent` | a synced group's title and/or hierarchy changed |
+| `Event\BackendUserOrphanedEvent` | a linked backend user gone from Entra was disabled/deleted |
+| `Event\FrontendUserOrphanedEvent` | a linked frontend user gone from Entra was disabled/deleted |
 
 All events are dispatched **after** the record has been persisted, so the payload
-always carries the final `uid`. The four user events implement
+always carries the final `uid`. The four create/update user events implement
 `Event\UserSyncEventInterface` (`getProviderId()`, `getTypo3User()`,
 `getUserId()`, `getResolver()`, `getRemoteUser()`); the two group events
 implement `Event\GroupSyncEventInterface` (`getTable()`, `getGroupUid()`,
-`getRemoteGroup()`, `getOauth2Id()`). TYPO3's listener provider matches parent
-types, so you can bind a listener to a concrete event class, to the shared
-interface (react to *any* user or group change), or to the abstract base class.
+`getRemoteGroup()`, `getOauth2Id()`); the two orphaned-user events implement
+`Event\UserOrphanedEventInterface` (`getProviderId()`, `getTypo3User()`,
+`getUserId()`, `getAction()` — the applied `OrphanedUserAction`). Orphaned-user
+events carry no resolver/remote owner, since the user no longer exists remotely.
+TYPO3's listener provider matches parent types, so you can bind a listener to a
+concrete event class, to the shared interface (react to *any* such change), or
+to the abstract base class.
 
 ```php
 // EventListener/CreateUserProfile.php
@@ -287,9 +332,10 @@ final class CreateUserProfile
 }
 ```
 
-> The sync never *deletes* TYPO3 users or groups, so there is no deletion event.
-> To reconcile after removals, compare the synced set (surfaced via the group
-> events) against your own records.
+> User removals are surfaced by the orphaned-user events above (opt-in via
+> `orphanedUserAction`). Groups are never deleted by the sync, so there is no
+> group-deletion event; reconcile groups by comparing the synced set (surfaced
+> via the group events) against your own records.
 
 ## FAQ
 

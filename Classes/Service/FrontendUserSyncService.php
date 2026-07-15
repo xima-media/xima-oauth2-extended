@@ -9,6 +9,7 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Xima\XimaOauth2Extended\Configuration\GraphSyncConfiguration;
+use Xima\XimaOauth2Extended\Enum\UserScope;
 use Xima\XimaOauth2Extended\Exception\OAuth2ConfigurationException;
 use Xima\XimaOauth2Extended\ResourceResolver\MicrosoftGraphSyncResolver;
 use Xima\XimaOauth2Extended\UserFactory\FrontendUserFactory;
@@ -32,6 +33,7 @@ class FrontendUserSyncService
         private readonly MicrosoftGraphClient $graphClient,
         private readonly ConnectionPool $connectionPool,
         private readonly LoggerInterface $logger,
+        private readonly OrphanedUserReconciler $orphanedUserReconciler,
     ) {
     }
 
@@ -52,9 +54,23 @@ class FrontendUserSyncService
         $users = $this->graphClient->getUsers($config);
 
         $result = new UserSyncResult();
+        $seenIdentifiers = [];
         foreach ($users as $graphUser) {
             $this->syncUser($graphUser, $token, $config, $result);
+            $id = (string)($graphUser['id'] ?? '');
+            if ($id !== '') {
+                $seenIdentifiers[$id] = true;
+            }
         }
+
+        $this->orphanedUserReconciler->reconcile(
+            UserScope::Frontend,
+            $config->provider,
+            $seenIdentifiers,
+            $config->options->orphanedUserAction,
+            $result,
+            $config->key
+        );
 
         return $result;
     }

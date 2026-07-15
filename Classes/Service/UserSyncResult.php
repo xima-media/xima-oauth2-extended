@@ -15,6 +15,12 @@ final class UserSyncResult
 
     public int $failed = 0;
 
+    /** Orphaned users disabled by reconciliation (left Entra, action=disable). */
+    public int $disabled = 0;
+
+    /** Orphaned users soft-deleted by reconciliation (left Entra, action=delete). */
+    public int $deleted = 0;
+
     public function total(): int
     {
         return $this->created + $this->updated + $this->skipped + $this->failed;
