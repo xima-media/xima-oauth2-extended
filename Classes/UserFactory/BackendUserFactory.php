@@ -4,6 +4,7 @@ namespace Xima\XimaOauth2Extended\UserFactory;
 
 use Doctrine\DBAL\Driver\Exception;
 use JetBrains\PhpStorm\ArrayShape;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Database\Connection;
@@ -12,6 +13,8 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
+use Xima\XimaOauth2Extended\Event\BackendUserCreatedEvent;
+use Xima\XimaOauth2Extended\Event\BackendUserUpdatedEvent;
 use Xima\XimaOauth2Extended\ResourceResolver\ProfileImageResolverInterface;
 use Xima\XimaOauth2Extended\ResourceResolver\UserGroupDetailsResolverInterface;
 use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
@@ -27,6 +30,10 @@ class BackendUserFactory extends AbstractUserFactory
         $this->updateUserGroups($typo3User);
         $this->updateAdmin($typo3User);
         $this->saveUpdatedTypo3User($typo3User);
+
+        GeneralUtility::makeInstance(EventDispatcherInterface::class)->dispatch(
+            new BackendUserUpdatedEvent($this->providerId, $typo3User, $this->resolver)
+        );
 
         return $typo3User;
     }
@@ -231,6 +238,10 @@ class BackendUserFactory extends AbstractUserFactory
 
         try {
             if ($this->persistIdentityForUser($userRecord)) {
+                GeneralUtility::makeInstance(EventDispatcherInterface::class)->dispatch(
+                    new BackendUserCreatedEvent($this->providerId, $userRecord, $this->resolver)
+                );
+
                 return $userRecord;
             }
         } catch (Exception) {

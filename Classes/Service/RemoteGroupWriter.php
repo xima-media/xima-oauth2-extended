@@ -2,10 +2,13 @@
 
 namespace Xima\XimaOauth2Extended\Service;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Xima\XimaOauth2Extended\Event\UserGroupCreatedEvent;
+use Xima\XimaOauth2Extended\Event\UserGroupUpdatedEvent;
 use Xima\XimaOauth2Extended\ResourceResolver\RemoteGroup;
 
 /**
@@ -38,19 +41,29 @@ class RemoteGroupWriter
         $oauthIds = array_map(static fn (RemoteGroup $group) => $group->id, $groups);
 
         $qb = $this->getQueryBuilder();
-        $existing = $qb->select('uid', 'title', 'oauth2_id')
+        $existing = $qb->select('uid', 'title', 'oauth2_id', 'subgroup')
             ->from($this->table)
             ->where($qb->expr()->in('oauth2_id', $qb->quoteArrayBasedValueListToStringList($oauthIds)))
             ->executeQuery()
             ->fetchAllAssociative();
 
-        /** @var array<string, array{uid: int, title: string}> $byOauthId */
+        /** @var array<string, array{uid: int, title: string, subgroup: string}> $byOauthId */
         $byOauthId = [];
         foreach ($existing as $row) {
-            $byOauthId[(string)$row['oauth2_id']] = ['uid' => (int)$row['uid'], 'title' => (string)$row['title']];
+            $byOauthId[(string)$row['oauth2_id']] = [
+                'uid' => (int)$row['uid'],
+                'title' => (string)$row['title'],
+                'subgroup' => (string)$row['subgroup'],
+            ];
         }
 
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+        // Track what actually changed so we only emit meaningful events.
+        /** @var array<string, true> $created oauth2_id set of newly inserted groups */
+        $created = [];
+        /** @var array<string, string> $previousTitles oauth2_id => title before refresh */
+        $previousTitles = [];
 
         // Create missing groups and refresh changed display names.
         foreach ($groups as $group) {
@@ -62,8 +75,10 @@ class RemoteGroupWriter
                     'title' => $group->title,
                     'oauth2_id' => $group->id,
                 ]);
-                $byOauthId[$group->id] = ['uid' => (int)$connection->lastInsertId(), 'title' => $group->title];
+                $byOauthId[$group->id] = ['uid' => (int)$connection->lastInsertId(), 'title' => $group->title, 'subgroup' => ''];
+                $created[$group->id] = true;
             } elseif ($group->title !== '' && $byOauthId[$group->id]['title'] !== $group->title) {
+                $previousTitles[$group->id] = $byOauthId[$group->id]['title'];
                 $connection->update(
                     $this->table,
                     ['title' => $group->title, 'tstamp' => time()],
@@ -74,6 +89,8 @@ class RemoteGroupWriter
         }
 
         // Wire the hierarchy into the subgroup field (child inherits its parents).
+        /** @var array<string, true> $subgroupChanged oauth2_id set of groups whose subgroup was rewritten */
+        $subgroupChanged = [];
         foreach ($groups as $group) {
             $parentUids = [];
             foreach ($group->parentIds as $parentOauthId) {
@@ -82,12 +99,21 @@ class RemoteGroupWriter
                 }
             }
 
+            $subgroup = implode(',', $parentUids);
+            if ($byOauthId[$group->id]['subgroup'] === $subgroup) {
+                continue;
+            }
+
             $connection->update(
                 $this->table,
-                ['subgroup' => implode(',', $parentUids)],
+                ['subgroup' => $subgroup],
                 ['uid' => $byOauthId[$group->id]['uid']]
             );
+            $byOauthId[$group->id]['subgroup'] = $subgroup;
+            $subgroupChanged[$group->id] = true;
         }
+
+        $this->dispatchGroupEvents($groups, $byOauthId, $created, $previousTitles, $subgroupChanged);
 
         $map = [];
         foreach ($byOauthId as $oauthId => $data) {
@@ -95,6 +121,40 @@ class RemoteGroupWriter
         }
 
         return $map;
+    }
+
+    /**
+     * Emits a created event per newly inserted group and an updated event per
+     * existing group whose title or hierarchy actually changed.
+     *
+     * @param RemoteGroup[] $groups
+     * @param array<string, array{uid: int, title: string, subgroup: string}> $byOauthId
+     * @param array<string, true> $created
+     * @param array<string, string> $previousTitles
+     * @param array<string, true> $subgroupChanged
+     */
+    private function dispatchGroupEvents(
+        array $groups,
+        array $byOauthId,
+        array $created,
+        array $previousTitles,
+        array $subgroupChanged
+    ): void {
+        $dispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+
+        foreach ($groups as $group) {
+            $uid = $byOauthId[$group->id]['uid'];
+
+            if (isset($created[$group->id])) {
+                $dispatcher->dispatch(new UserGroupCreatedEvent($this->table, $uid, $group));
+                continue;
+            }
+
+            if (isset($previousTitles[$group->id]) || isset($subgroupChanged[$group->id])) {
+                $previousTitle = $previousTitles[$group->id] ?? $byOauthId[$group->id]['title'];
+                $dispatcher->dispatch(new UserGroupUpdatedEvent($this->table, $uid, $group, $previousTitle));
+            }
+        }
     }
 
     private function getQueryBuilder(): QueryBuilder

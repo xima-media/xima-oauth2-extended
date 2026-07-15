@@ -240,6 +240,57 @@ client it provides:
 * **Test connection** — acquires an app-only token and reads a few sample users
   to confirm the credentials and permissions work.
 
+## Reacting to sync (PSR-14 events)
+
+Third-party extensions often need to run their own logic when a user or group is
+synced — create a profile record on user creation, reconcile memberships when a
+group's hierarchy changes, notify another system, and so on. The extension
+dispatches PSR-14 events for these moments. Because they fire from the shared
+`UserFactory` / `RemoteGroupWriter` code paths, **user events fire for both the
+bulk Graph sync and interactive OAuth2 login**; group events fire from the Graph
+sync (rich group path).
+
+| Event | Fired when |
+|-------|------------|
+| `Event\BackendUserCreatedEvent` | a new backend user was created and linked |
+| `Event\BackendUserUpdatedEvent` | an existing linked backend user was updated |
+| `Event\FrontendUserCreatedEvent` | a new frontend user was created and linked |
+| `Event\FrontendUserUpdatedEvent` | an existing linked frontend user was updated |
+| `Event\UserGroupCreatedEvent` | a new TYPO3 group was created from a remote group |
+| `Event\UserGroupUpdatedEvent` | a synced group's title and/or hierarchy changed |
+
+All events are dispatched **after** the record has been persisted, so the payload
+always carries the final `uid`. The four user events implement
+`Event\UserSyncEventInterface` (`getProviderId()`, `getTypo3User()`,
+`getUserId()`, `getResolver()`, `getRemoteUser()`); the two group events
+implement `Event\GroupSyncEventInterface` (`getTable()`, `getGroupUid()`,
+`getRemoteGroup()`, `getOauth2Id()`). TYPO3's listener provider matches parent
+types, so you can bind a listener to a concrete event class, to the shared
+interface (react to *any* user or group change), or to the abstract base class.
+
+```php
+// EventListener/CreateUserProfile.php
+namespace Vendor\MyExt\EventListener;
+
+use TYPO3\CMS\Core\Attribute\AsEventListener;
+use Xima\XimaOauth2Extended\Event\FrontendUserCreatedEvent;
+
+final class CreateUserProfile
+{
+    #[AsEventListener(identifier: 'my-ext/create-profile')]
+    public function __invoke(FrontendUserCreatedEvent $event): void
+    {
+        $userId = $event->getUserId();
+        $email = $event->getResolver()->getIntendedEmail();
+        // create your profile record for $userId ...
+    }
+}
+```
+
+> The sync never *deletes* TYPO3 users or groups, so there is no deletion event.
+> To reconcile after removals, compare the synced set (surfaced via the group
+> events) against your own records.
+
 ## FAQ
 
 <details>
