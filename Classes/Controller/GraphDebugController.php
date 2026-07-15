@@ -54,9 +54,13 @@ class GraphDebugController
         $action = (string)($params['action'] ?? 'users');
         $clients = GraphSyncConfiguration::loadAll();
 
-        // Import actions (POST) run, then redirect back to the user list.
         if ($action === 'createBackendUser' || $action === 'createFrontendUser') {
-            return $this->createUser($params, $clients, $action === 'createBackendUser' ? 'be' : 'fe');
+            if ($request->getMethod() !== 'POST') {
+                return new RedirectResponse($this->moduleLink('users'));
+            }
+            $body = (array)$request->getParsedBody();
+
+            return $this->createUser($body, $clients, $action === 'createBackendUser' ? 'be' : 'fe');
         }
 
         $moduleTemplate = $this->moduleTemplateFactory->create($request);
