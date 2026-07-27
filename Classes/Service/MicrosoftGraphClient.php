@@ -34,6 +34,17 @@ class MicrosoftGraphClient
     private const GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
 
     /**
+     * Properties requested for every user, whether fetched in bulk, by search or
+     * individually. Beyond the identity fields needed to map a TYPO3 user, this
+     * carries the contact properties (phone numbers, office location, job title,
+     * department) that listeners on the sync events use to build contact
+     * records. All of them are standard, selectable `microsoft.graph.user`
+     * properties — Graph rejects the whole request with 400 on an unknown one.
+     */
+    private const USER_SELECT = 'id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,'
+        . 'jobTitle,department,officeLocation,mobilePhone,businessPhones';
+
+    /**
      * Per-run cache of group parent lookups (group id => parent group ids), so
      * each group's hierarchy is resolved once across a whole sync run.
      *
@@ -97,8 +108,7 @@ class MicrosoftGraphClient
     {
         $token = $this->getAppAccessToken($config);
 
-        $select = 'id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled';
-        $url = self::GRAPH_BASE_URL . '/users?$select=' . $select . '&$top=999';
+        $url = self::GRAPH_BASE_URL . '/users?$select=' . self::USER_SELECT . '&$top=999';
 
         $users = [];
         while ($url !== null) {
@@ -124,11 +134,10 @@ class MicrosoftGraphClient
     {
         $token = $this->getAppAccessToken($config);
         $top = max(1, min($top, 100));
-        $select = 'id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled';
 
         $query = trim($query);
         if ($query === '') {
-            $url = self::GRAPH_BASE_URL . '/users?$select=' . $select . '&$top=' . $top;
+            $url = self::GRAPH_BASE_URL . '/users?$select=' . self::USER_SELECT . '&$top=' . $top;
 
             return $this->requestJson($url, $token)['value'] ?? [];
         }
@@ -139,7 +148,7 @@ class MicrosoftGraphClient
         $search = rawurlencode(
             '"displayName:' . $term . '" OR "userPrincipalName:' . $term . '" OR "mail:' . $term . '" OR "givenName:' . $term . '" OR "surname:' . $term . '"'
         );
-        $url = self::GRAPH_BASE_URL . '/users?$select=' . $select . '&$top=' . $top . '&$search=' . $search;
+        $url = self::GRAPH_BASE_URL . '/users?$select=' . self::USER_SELECT . '&$top=' . $top . '&$search=' . $search;
 
         return $this->requestJson($url, $token, ['ConsistencyLevel' => 'eventual'])['value'] ?? [];
     }
@@ -154,8 +163,7 @@ class MicrosoftGraphClient
     public function getUser(GraphSyncConfiguration $config, string $userId): array
     {
         $token = $this->getAppAccessToken($config);
-        $select = 'id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,jobTitle,department,officeLocation,mobilePhone';
-        $url = self::GRAPH_BASE_URL . '/users/' . rawurlencode($userId) . '?$select=' . $select;
+        $url = self::GRAPH_BASE_URL . '/users/' . rawurlencode($userId) . '?$select=' . self::USER_SELECT;
 
         return $this->requestJson($url, $token);
     }

@@ -80,6 +80,14 @@ class MicrosoftGraphSyncResolver implements ResourceResolverInterface, UserGroup
         if (empty($feUser['name']) && !empty($this->graphUser['displayName'])) {
             $feUser['name'] = (string)$this->graphUser['displayName'];
         }
+
+        if (!empty($this->graphUser['givenName'])) {
+            $feUser['first_name'] = (string)$this->graphUser['givenName'];
+        }
+
+        if (!empty($this->graphUser['surname'])) {
+            $feUser['last_name'] = (string)$this->graphUser['surname'];
+        }
     }
 
     public function resolveUserGroups(): ?array
