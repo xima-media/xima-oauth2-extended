@@ -2,6 +2,8 @@
 
 namespace Xima\XimaOauth2Extended\ResourceResolver;
 
+use Xima\XimaOauth2Extended\Enum\OrphanedUserAction;
+
 final class ResolverOptions
 {
     /** @var class-string */
@@ -32,6 +34,12 @@ final class ResolverOptions
     public string $defaultBackendAdminGroups = '';
 
     /**
+     * How to reconcile users that are still linked to the client but no longer
+     * present in Entra. Applies to the app-only Graph sync only.
+     */
+    public OrphanedUserAction $orphanedUserAction = OrphanedUserAction::None;
+
+    /**
      * @param array<string, mixed> $extConf
      */
     public static function createFromExtensionConfiguration(array $extConf): self
@@ -50,6 +58,7 @@ final class ResolverOptions
         $conf->imageStorageFrontendIdentifier = $extConf['imageStorageFrontendIdentifier'] ?? '1:/user_upload/oauth';
         $conf->defaultBackendLanguage = $extConf['defaultBackendLanguage'] ?? 'default';
         $conf->defaultBackendAdminGroups = $extConf['defaultBackendAdminGroups'] ?? '';
+        $conf->orphanedUserAction = OrphanedUserAction::fromConfig($extConf['orphanedUserAction'] ?? null);
 
         return $conf;
     }
