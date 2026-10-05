@@ -1,0 +1,75 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+    data-namespace-typo3-fluid="true">
+<div class="card mb-3">
+    <div class="card-header">
+        <strong>{client.key}</strong>
+        <f:if condition="{client.complete}">
+            <f:then><span class="badge badge-success">complete</span></f:then>
+            <f:else><span class="badge badge-warning">incomplete</span></f:else>
+        </f:if>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Credentials &amp; identity</h4>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr><th>Tenant ID</th><td><code>{client.tenantId}</code></td></tr>
+                        <tr><th>Client ID</th><td><code>{client.clientId}</code></td></tr>
+                        <tr>
+                            <th>Client secret</th>
+                            <td>
+                                <f:if condition="{client.secretSet}">
+                                    <f:then><span class="badge badge-success">set</span></f:then>
+                                    <f:else><span class="badge badge-danger">not set</span></f:else>
+                                </f:if>
+                            </td>
+                        </tr>
+                        <tr><th>Identity provider</th><td><code>{client.provider}</code></td></tr>
+                        <tr><th>Frontend user PID</th><td>{client.frontendUserPid}</td></tr>
+                        <tr>
+                            <th>Cached token</th>
+                            <td>
+                                <f:if condition="{client.tokenExpiry}">
+                                    <f:then>valid until <f:format.date date="@{client.tokenExpiry}" format="Y-m-d H:i:s"/></f:then>
+                                    <f:else><span class="text-muted">none cached</span></f:else>
+                                </f:if>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h4>Sync options</h4>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr><th>createBackendUser</th><td><f:render partial="Bool" arguments="{value:client.options.createBackendUser}"/></td></tr>
+                        <tr><th>createBackendUsergroups</th><td><f:render partial="Bool" arguments="{value:client.options.createBackendUsergroups}"/></td></tr>
+                        <tr><th>requireBackendUsergroup</th><td><f:render partial="Bool" arguments="{value:client.options.requireBackendUsergroup}"/></td></tr>
+                        <tr><th>defaultBackendUsergroup</th><td><code>{client.options.defaultBackendUsergroup}</code></td></tr>
+                        <tr><th>defaultBackendAdminGroups</th><td><code>{client.options.defaultBackendAdminGroups}</code></td></tr>
+                        <tr><th>defaultBackendLanguage</th><td><code>{client.options.defaultBackendLanguage}</code></td></tr>
+                        <tr><th>createFrontendUser</th><td><f:render partial="Bool" arguments="{value:client.options.createFrontendUser}"/></td></tr>
+                        <tr><th>createFrontendUsergroups</th><td><f:render partial="Bool" arguments="{value:client.options.createFrontendUsergroups}"/></td></tr>
+                        <tr><th>requireFrontendUsergroup</th><td><f:render partial="Bool" arguments="{value:client.options.requireFrontendUsergroup}"/></td></tr>
+                        <tr><th>defaultFrontendUsergroup</th><td><code>{client.options.defaultFrontendUsergroup}</code></td></tr>
+                        <tr><th>imageStorageBackendIdentifier</th><td><code>{client.options.imageStorageBackendIdentifier}</code></td></tr>
+                        <tr><th>imageStorageFrontendIdentifier</th><td><code>{client.options.imageStorageFrontendIdentifier}</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <h4>Endpoints</h4>
+        <table class="table table-sm">
+            <tbody>
+                <tr><th style="width:12rem">Token</th><td><code>{client.endpoints.tokenEndpoint}</code></td></tr>
+                <tr><th>Scope</th><td><code>{client.endpoints.scope}</code></td></tr>
+                <tr><th>Graph base</th><td><code>{client.endpoints.graphBaseUrl}</code></td></tr>
+                <tr><th>Users</th><td><code>{client.endpoints.usersEndpoint}</code></td></tr>
+                <tr><th>memberOf</th><td><code>{client.endpoints.memberOfEndpoint}</code></td></tr>
+                <tr><th>Photo</th><td><code>{client.endpoints.photoEndpoint}</code></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</html>

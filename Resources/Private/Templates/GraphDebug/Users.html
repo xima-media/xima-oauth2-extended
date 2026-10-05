@@ -1,0 +1,81 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+    data-namespace-typo3-fluid="true">
+<f:layout name="Module"/>
+
+<f:section name="Content">
+    <f:if condition="{noClients}">
+        <f:then>
+            <h1>Microsoft Entra</h1>
+            <div class="alert alert-info">
+                No <code>graphSync</code> clients configured. Configure them in
+                <code>settings.php</code> under
+                <code>EXTENSIONS/xima_oauth2_extended/graphSync</code>.
+            </div>
+        </f:then>
+        <f:else>
+            <h1>Users &mdash; {client.key}</h1>
+            <p class="text-muted">
+                Remote users of the Entra tenant. Import a user as a TYPO3 backend
+                or frontend user with the buttons on the right. Imports are
+                idempotent (an existing user is linked/updated, not duplicated).
+            </p>
+
+            <form method="post" class="mb-3">
+                <input type="hidden" name="action" value="users"/>
+                <input type="hidden" name="client" value="{client.key}"/>
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control" value="{query}"
+                        placeholder="Display name, userPrincipalName or mail&hellip;"/>
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+                <small class="form-text text-muted">Empty query lists the first 50 users.</small>
+            </form>
+
+            <f:if condition="{error}">
+                <div class="alert alert-danger"><code>{error}</code></div>
+            </f:if>
+
+            <f:if condition="{rows}">
+                <f:then>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>userPrincipalName / mail</th>
+                                <th>enabled</th>
+                                <th>Backend user</th>
+                                <th>Frontend user</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <f:for each="{rows}" as="row">
+                                <tr>
+                                    <td>
+                                        <strong>{row.user.displayName}</strong>
+                                    </td>
+                                    <td>
+                                        {row.user.userPrincipalName}
+                                        <f:if condition="{row.user.mail}">
+                                            <div class="text-muted">{row.user.mail}</div>
+                                        </f:if>
+                                    </td>
+                                    <td><f:render partial="Bool" arguments="{value:row.user.accountEnabled}"/></td>
+                                    <td><f:render partial="ImportCell" arguments="{status:row.be, type:'createBackendUser', label:'BE', client:client.key, id:row.user.id}"/></td>
+                                    <td><f:render partial="ImportCell" arguments="{status:row.fe, type:'createFrontendUser', label:'FE', client:client.key, id:row.user.id}"/></td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-default" href="{row.detailLink}">Details &amp; mapping</a>
+                                    </td>
+                                </tr>
+                            </f:for>
+                        </tbody>
+                    </table>
+                </f:then>
+                <f:else>
+                    <div class="alert alert-info">No users found.</div>
+                </f:else>
+            </f:if>
+        </f:else>
+    </f:if>
+</f:section>
+</html>

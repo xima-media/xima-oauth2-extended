@@ -1,0 +1,23 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+    data-namespace-typo3-fluid="true">
+<f:if condition="{status.imported}">
+    <f:then>
+        <span class="badge badge-success">imported</span>
+        <a class="btn btn-sm btn-default" href="{status.editLink}">Edit</a>
+    </f:then>
+    <f:else>
+        <f:if condition="{status.exists}">
+            <span class="badge badge-info" title="A user with this username/email exists but is not linked to this provider">exists</span>
+            <a class="btn btn-sm btn-default" href="{status.editLink}">Edit</a>
+        </f:if>
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="{type}"/>
+            <input type="hidden" name="client" value="{client}"/>
+            <input type="hidden" name="id" value="{id}"/>
+            <button type="submit" class="btn btn-sm btn-default">
+                Create {label} user
+            </button>
+        </form>
+    </f:else>
+</f:if>
+</html>

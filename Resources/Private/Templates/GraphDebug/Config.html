@@ -1,0 +1,13 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+    data-namespace-typo3-fluid="true">
+<f:layout name="Module"/>
+
+<f:section name="Content">
+    <h1>Configuration &mdash; {client.key}</h1>
+    <p class="text-muted">
+        Read-only view of the <code>graphSync</code> client. Client secrets are
+        never displayed.
+    </p>
+    <f:render partial="ClientCard" arguments="{client: client}"/>
+</f:section>
+</html>

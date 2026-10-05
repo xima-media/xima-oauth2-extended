@@ -1,2 +1,8 @@
 oauth2_client_providers {
 }
+
+# The graphSync app-only Microsoft Graph user sync is configured as a map of
+# independent clients in settings.php (EXTENSIONS/xima_oauth2_extended/graphSync),
+# each keyed by an arbitrary client id. See README.md for the full option list.
+graphSync {
+}
