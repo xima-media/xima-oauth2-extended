@@ -7,6 +7,76 @@
 			"requestMappings": [
 				{
 					"requestParam": "subject",
+					"match": "be-unlinked",
+					"claims": {
+						"sub": "be-unlinked",
+						"email": "editor@example.org",
+						"email_verified": false,
+						"name": "BE unlinked"
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "be-admin-email",
+					"claims": {
+						"sub": "be-admin-email",
+						"username": "admin",
+						"email": "admin@example.com",
+						"email_verified": false,
+						"name": "Mallory"
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "be-disabled",
+					"claims": {
+						"sub": "be-disabled",
+						"username": "be-disabled",
+						"email": "be-disabled@example.org",
+						"name": "BE disabled"
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "fe-otherpid",
+					"claims": {
+						"sub": "fe-otherpid",
+						"username": "fe-otherpid",
+						"email": "fe-otherpid@example.org",
+						"name": "FE other pid"
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "be-verified",
+					"claims": {
+						"sub": "be-verified",
+						"email": "editor-verified@example.org",
+						"email_verified": true,
+						"name": "BE verified"
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "be-duplicate",
+					"claims": {
+						"sub": "be-duplicate",
+						"email": "be-duplicate@example.org",
+						"name": "BE duplicate"
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "fe-member",
+					"claims": {
+						"sub": "fe-member",
+						"email": "fe-member@example.org",
+						"email_verified": true,
+						"name": "FE member"
+					}
+				},
+				{
+					"requestParam": "subject",
 					"match": "new-user",
 					"claims": {
 						"sub": "new-user",

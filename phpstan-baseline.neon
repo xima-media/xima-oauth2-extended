@@ -115,12 +115,6 @@ parameters:
 			path: Classes/UserFactory/BackendUserFactory.php
 
 		-
-			message: '#^Method Xima\\XimaOauth2Extended\\UserFactory\\BackendUserFactory\:\:findUserByUsernameOrEmail\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: Classes/UserFactory/BackendUserFactory.php
-
-		-
 			message: '#^Method Xima\\XimaOauth2Extended\\UserFactory\\BackendUserFactory\:\:persistAndRetrieveUser\(\) has parameter \$userRecord with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
@@ -205,12 +199,6 @@ parameters:
 			path: Classes/UserFactory/FrontendUserFactory.php
 
 		-
-			message: '#^Method Xima\\XimaOauth2Extended\\UserFactory\\FrontendUserFactory\:\:findUserByUsernameOrEmail\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: Classes/UserFactory/FrontendUserFactory.php
-
-		-
 			message: '#^Method Xima\\XimaOauth2Extended\\UserFactory\\FrontendUserFactory\:\:persistAndRetrieveUser\(\) has parameter \$userRecord with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
@@ -243,11 +231,5 @@ parameters:
 		-
 			message: '#^Method Xima\\XimaOauth2Extended\\UserFactory\\FrontendUserFactory\:\:updateFrontendUserSlug\(\) has parameter \$userRecord with no type specified\.$#'
 			identifier: missingType.parameter
-			count: 1
-			path: Classes/UserFactory/FrontendUserFactory.php
-
-		-
-			message: '#^Property Xima\\XimaOauth2Extended\\UserFactory\\FrontendUserFactory\:\:\$extendedProviderConfiguration type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: Classes/UserFactory/FrontendUserFactory.php

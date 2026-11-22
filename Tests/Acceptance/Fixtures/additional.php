@@ -32,6 +32,8 @@ $mockProvider = static fn (string $label, string $scope): array => [
 ];
 
 $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oauth2_client']['providers'] = [
+    'mock-link' => $mockProvider('Mock link', Oauth2ProviderManager::SCOPE_BACKEND),
+    'mock-fe' => $mockProvider('Mock FE', Oauth2ProviderManager::SCOPE_FRONTEND),
     'mock-create' => $mockProvider('Mock create', Oauth2ProviderManager::SCOPE_BACKEND),
     'mock-groups' => $mockProvider('Mock groups', Oauth2ProviderManager::SCOPE_BACKEND),
     'mock-admin-all' => $mockProvider('Mock admin all', Oauth2ProviderManager::SCOPE_BACKEND),
@@ -39,6 +41,12 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oauth2_client']['providers'] = [
 ];
 
 $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['xima_oauth2_extended']['oauth2_client_providers'] = [
+    'mock-link' => [
+        'resolverClassName' => GenericResourceResolver::class,
+    ],
+    'mock-fe' => [
+        'resolverClassName' => GenericResourceResolver::class,
+    ],
     'mock-create' => [
         'resolverClassName' => GenericResourceResolver::class,
         'createBackendUser' => true,

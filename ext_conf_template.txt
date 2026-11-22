@@ -1,2 +1,5 @@
+# cat=basic; type=boolean; label=Link existing users at login: Link an unknown OAuth2 identity to the existing user with the same username or email. Never links administrators, disabled users, frontend users outside the storage folder or unverified email addresses.
+linkExistingUsers = 1
+
 oauth2_client_providers {
 }

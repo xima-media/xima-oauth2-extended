@@ -8,10 +8,8 @@ use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
+use Xima\XimaOauth2Extended\Exception\UserLinkingDeniedException;
 use Xima\XimaOauth2Extended\ResourceResolver\ProfileImageResolverInterface;
 use Xima\XimaOauth2Extended\ResourceResolver\UserGroupResolverInterface;
 
@@ -58,14 +56,6 @@ class BackendUserFactory extends AbstractUserFactory
         if ($success) {
             $userRecord['avatar'] = 1;
         }
-    }
-
-    protected function getQueryBuilder(string $tableName): QueryBuilder
-    {
-        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
-        $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        return $qb;
     }
 
     private function createUserGroups(): void
@@ -174,7 +164,12 @@ class BackendUserFactory extends AbstractUserFactory
 
     public function registerRemoteUser(): ?array
     {
-        $userRecord = $this->findUserByUsernameOrEmail();
+        try {
+            $userRecord = $this->findExistingUser('be_users', 'tx_oauth2_beuser_provider_configuration');
+        } catch (UserLinkingDeniedException $e) {
+            $this->logDeniedLogin($e);
+            return null;
+        }
 
         $userToLinkNotFound = !is_array($userRecord);
         $doCreateNewUser = $this->resolver->getOptions()->createBackendUser;
@@ -227,39 +222,15 @@ class BackendUserFactory extends AbstractUserFactory
         return null;
     }
 
-    protected function findUserByUsernameOrEmail(): ?array
+    /**
+     * @param array<string, mixed> $user
+     */
+    protected function assertUserMayBeLinked(array $user): void
     {
-        $constraints = [];
-        $username = $this->resolver->getIntendedUsername();
-        $email = $this->resolver->getIntendedEmail();
-        $qb = $this->getQueryBuilder('be_users');
-
-        if ($username) {
-            $constraints[] = $qb->expr()->eq(
-                'username',
-                $qb->createNamedParameter($username)
-            );
+        if ($user['admin'] ?? false) {
+            throw new UserLinkingDeniedException('the matching user is an administrator', 1795366006);
         }
-
-        if ($email) {
-            $constraints[] = $qb->expr()->eq(
-                'email',
-                $qb->createNamedParameter($email)
-            );
-        }
-
-        if (empty($constraints)) {
-            return null;
-        }
-
-        $user = $qb
-            ->select('*')
-            ->from('be_users')
-            ->where($qb->expr()->or(...$constraints))
-            ->executeQuery()
-            ->fetchAssociative();
-
-        return $user ?: null;
+        parent::assertUserMayBeLinked($user);
     }
 
     protected function checkBackendGroupRestriction(): bool
@@ -304,7 +275,7 @@ class BackendUserFactory extends AbstractUserFactory
             'crdate' => time(),
             'tstamp' => time(),
             'admin' => 0,
-            'disable' => 1,
+            'disable' => 0,
             'starttime' => 0,
             'endtime' => 0,
             'password' => $saltingInstance->getHashedPassword(md5(uniqid('', true))),
@@ -342,40 +313,6 @@ class BackendUserFactory extends AbstractUserFactory
      */
     public function persistIdentityForUser(array $userRecord): bool
     {
-        // create identity
-        $qb = $this->getQueryBuilder('tx_oauth2_beuser_provider_configuration');
-        $qb->insert('tx_oauth2_beuser_provider_configuration')
-            ->values([
-                'identifier' => $this->resolver->getRemoteUser()->getId(),
-                'provider' => $this->providerId,
-                'crdate' => time(),
-                'tstamp' => time(),
-                'parentid' => (int)$userRecord['uid'],
-            ])
-            ->executeStatement();
-
-        // get newly created identity
-        $qb = $this->getQueryBuilder('tx_oauth2_beuser_provider_configuration');
-        $qb->getRestrictions()->removeByType(Oauth2BeUserProviderConfigurationRestriction::class);
-        $identityCount = $qb->count('uid')
-            ->from('tx_oauth2_beuser_provider_configuration')
-            ->where($qb->expr()->eq('parentid', (int)$userRecord['uid']))
-            ->executeQuery()
-            ->fetchOne();
-
-        if ((!$identityCount) > 0) {
-            return false;
-        }
-
-        // update backend user
-        $qb = $this->getQueryBuilder('be_users');
-        $qb->update('be_users')
-            ->where(
-                $qb->expr()->eq('uid', (int)$userRecord['uid'])
-            )
-            ->set('tx_oauth2_client_configs', (int)$identityCount)
-            ->executeStatement();
-
-        return true;
+        return $this->persistIdentity('be_users', 'tx_oauth2_beuser_provider_configuration', (int)$userRecord['uid']);
     }
 }

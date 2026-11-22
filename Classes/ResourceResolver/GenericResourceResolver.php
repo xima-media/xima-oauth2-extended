@@ -29,8 +29,6 @@ class GenericResourceResolver extends AbstractResourceResolver
             $beUser['email'] = strtolower($remoteUser['email']);
         }
 
-        $beUser['disable'] = 0;
-
         if (!$beUser['realName']) {
             $beUser['realName'] = $remoteUser['name'];
         }
@@ -47,8 +45,6 @@ class GenericResourceResolver extends AbstractResourceResolver
         if ($remoteUser['email']) {
             $feUser['email'] = strtolower($remoteUser['email']);
         }
-
-        $feUser['disable'] = 0;
 
         if (!$feUser['name']) {
             $feUser['name'] = $remoteUser['name'];

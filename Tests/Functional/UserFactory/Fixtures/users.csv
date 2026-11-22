@@ -1,0 +1,15 @@
+"be_users"
+,"uid","pid","username","email","realName","admin","disable","tx_oauth2_client_configs"
+,1,0,"admin","admin@example.org","Admin",1,0,0
+,2,0,"editor","editor@example.org","Editor",0,0,0
+,3,0,"disabled","disabled@example.org","Disabled",0,1,1
+,4,0,"duplicate","duplicate@example.org","Duplicate",0,0,2
+"tx_oauth2_beuser_provider_configuration"
+,"uid","pid","parentid","provider","identifier"
+,1,0,3,"mock","disabled"
+,2,0,4,"mock","duplicate"
+,3,0,4,"mock","duplicate"
+"fe_users"
+,"uid","pid","username","email","name","disable"
+,1,3,"other-site","other-site@example.org","Other site",0
+,2,2,"member","member@example.org","Member",0

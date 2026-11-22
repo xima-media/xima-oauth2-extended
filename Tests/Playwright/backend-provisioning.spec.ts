@@ -1,17 +1,7 @@
-import { test, expect, Page } from '@playwright/test';
-import { startBackendOAuth2Login } from './helpers/backend';
+import { test, expect } from '@playwright/test';
+import { startBackendOAuth2Login, expectBackendLoggedIn, expectBackendLoginFailed } from './helpers/backend';
 import { mockLogin } from './helpers/mockLogin';
 import { deleteBackendUserByEmail, findBackendUserByEmail, countBackendIdentities } from './helpers/database';
-
-async function expectBackendLoggedIn(page: Page, realName: string): Promise<void> {
-    await expect(page.locator('.scaffold-header')).toBeVisible();
-    await expect(page.locator('.scaffold-toolbar')).toContainText(realName);
-}
-
-async function expectBackendLoginFailed(page: Page): Promise<void> {
-    await expect(page).toHaveURL(/\/typo3\/login/);
-    await expect(page.locator('.scaffold-header')).toHaveCount(0);
-}
 
 test.describe('Backend user provisioning', () => {
     test('A1: an unknown identity creates a backend user with the default groups', async ({ page }) => {
