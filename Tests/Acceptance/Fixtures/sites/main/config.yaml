@@ -1,6 +1,9 @@
-base: /
+# Absolute, because the OAuth2 callback URL is built from it
+base: 'http://%env(DDEV_HOSTNAME)%/'
 rootPageId: 1
 websiteTitle: 'OAuth2 Extended'
+enabled_oauth2_providers: mock-fe
+oauth2_storage_pid: 2
 languages:
   -
     title: English

@@ -39,7 +39,8 @@ class FrontendUserLookup
         }
 
         $providerId = $event->getProviderId();
-        $extendedProviderConfiguration = $this->extensionConfiguration->get('xima_oauth2_extended', 'oauth2_client_providers') ?? [];
+        $extensionConfiguration = $this->extensionConfiguration->get('xima_oauth2_extended');
+        $extendedProviderConfiguration = $extensionConfiguration['oauth2_client_providers'] ?? [];
         $resolverOptions = ResolverOptions::createFromExtensionConfiguration($extendedProviderConfiguration[$providerId] ?? []);
         if (!$resolverOptions->resolverClassName) {
             return;
@@ -56,7 +57,13 @@ class FrontendUserLookup
         $this->logger->info('Register remote user from provider "' . $event->getProviderId() . '" (remote id: ' . $event->getRemoteUser()->getId() . ')');
 
         // create/link user
-        $userFactory = new FrontendUserFactory($resolver, $providerId, $extendedProviderConfiguration);
+        $userFactory = new FrontendUserFactory(
+            $resolver,
+            $providerId,
+            $extendedProviderConfiguration,
+            $this->logger,
+            (bool)($extensionConfiguration['linkExistingUsers'] ?? true)
+        );
         $storagePid = $this->getUserStoragePid($event);
         $typo3User = $userFactory->registerRemoteUser($storagePid);
 

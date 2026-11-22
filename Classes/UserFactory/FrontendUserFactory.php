@@ -4,70 +4,27 @@ namespace Xima\XimaOauth2Extended\UserFactory;
 
 use Doctrine\DBAL\Driver\Exception;
 use JetBrains\PhpStorm\ArrayShape;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Database\Connection;
-use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\DataHandling\Model\RecordStateFactory;
 use TYPO3\CMS\Core\DataHandling\SlugHelper;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2BeUserProviderConfigurationRestriction;
-use Waldhacker\Oauth2Client\Database\Query\Restriction\Oauth2FeUserProviderConfigurationRestriction;
+use Xima\XimaOauth2Extended\Exception\UserLinkingDeniedException;
 use Xima\XimaOauth2Extended\ResourceResolver\ResourceResolverInterface;
 
-class FrontendUserFactory
+class FrontendUserFactory extends AbstractUserFactory
 {
-    protected ResourceResolverInterface $resolver;
-
-    protected string $providerId = '';
-
-    protected array $extendedProviderConfiguration = [];
-
     public function __construct(
         ResourceResolverInterface $resolver,
         string $providerId,
-        array $extendedProviderConfiguration
+        protected array $extendedProviderConfiguration,
+        LoggerInterface $logger = new NullLogger(),
+        bool $linkExistingUsers = true
     ) {
-        $this->resolver = $resolver;
-        $this->providerId = $providerId;
-        $this->extendedProviderConfiguration = $extendedProviderConfiguration;
-    }
-
-    protected function findUserByUsernameOrEmail(): ?array
-    {
-        $constraints = [];
-        $username = $this->resolver->getIntendedUsername();
-        $email = $this->resolver->getIntendedEmail();
-        $qb = $this->getQueryBuilder('fe_users');
-
-        if ($username) {
-            $constraints[] = $qb->expr()->eq(
-                'username',
-                $qb->createNamedParameter($username, Connection::PARAM_STR)
-            );
-        }
-
-        if ($email) {
-            $constraints[] = $qb->expr()->eq(
-                'email',
-                $qb->createNamedParameter($email, Connection::PARAM_STR)
-            );
-        }
-
-        if (empty($constraints)) {
-            return null;
-        }
-
-        $user = $qb
-            ->select('*')
-            ->from('fe_users')
-            ->where($qb->expr()->or(...$constraints))
-            ->executeQuery()
-            ->fetchAssociative();
-
-        return $user ?: null;
+        parent::__construct($resolver, $providerId, $logger, $linkExistingUsers);
     }
 
     public function registerRemoteUser(int $targetPid): ?array
@@ -75,7 +32,12 @@ class FrontendUserFactory
         $doCreateNewUser = isset($this->extendedProviderConfiguration[$this->providerId]['createFrontendUser']) && $this->extendedProviderConfiguration[$this->providerId]['createFrontendUser'];
 
         // find or optionally create
-        $userRecord = $this->findUserByUsernameOrEmail();
+        try {
+            $userRecord = $this->findExistingUser('fe_users', 'tx_oauth2_feuser_provider_configuration', $targetPid);
+        } catch (UserLinkingDeniedException $e) {
+            $this->logDeniedLogin($e);
+            return null;
+        }
         if (!is_array($userRecord)) {
             if ($doCreateNewUser) {
                 $userRecord = $this->createBasicFrontendUser($targetPid);
@@ -151,42 +113,7 @@ class FrontendUserFactory
      */
     public function persistIdentityForUser($userRecord): bool
     {
-        // create identity
-        $qb = $this->getQueryBuilder('tx_oauth2_feuser_provider_configuration');
-        $qb->insert('tx_oauth2_feuser_provider_configuration')
-            ->values([
-                'identifier' => $this->resolver->getRemoteUser()->getId(),
-                'provider' => $this->providerId,
-                'crdate' => time(),
-                'tstamp' => time(),
-                'parentid' => (int)$userRecord['uid'],
-            ])
-            ->executeStatement();
-
-        // get newly created identity
-        $qb = $this->getQueryBuilder('tx_oauth2_feuser_provider_configuration');
-        $qb->getRestrictions()->removeByType(Oauth2BeUserProviderConfigurationRestriction::class);
-        $qb->getRestrictions()->removeByType(Oauth2FeUserProviderConfigurationRestriction::class);
-        $identityCount = $qb->count('uid')
-            ->from('tx_oauth2_feuser_provider_configuration')
-            ->where($qb->expr()->eq('parentid', (int)$userRecord['uid']))
-            ->executeQuery()
-            ->fetchOne();
-
-        if ((!$identityCount) > 0) {
-            return false;
-        }
-
-        // update frontend user
-        $qb = $this->getQueryBuilder('fe_users');
-        $qb->update('fe_users')
-            ->where(
-                $qb->expr()->eq('uid', (int)$userRecord['uid'])
-            )
-            ->set('tx_oauth2_client_configs', (int)$identityCount)
-            ->executeStatement();
-
-        return true;
+        return $this->persistIdentity('fe_users', 'tx_oauth2_feuser_provider_configuration', (int)$userRecord['uid']);
     }
 
     /**
@@ -246,13 +173,5 @@ class FrontendUserFactory
             'username' => '',
             'usergroup' => $defaultUserGroup,
         ];
-    }
-
-    protected function getQueryBuilder(string $tableName): QueryBuilder
-    {
-        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
-        $qb->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        return $qb;
     }
 }

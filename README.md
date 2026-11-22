@@ -91,6 +91,22 @@ The extension provides customizable options to tailor the resolver's behavior:
 | `defaultBackendLanguage`         | Language identifier for created backend users                                                         | `default`                        |
 | `defaultBackendAdminGroups`      | Comma separated list of remote `oauth2_id`s that will become Admin during login. Special value `all`. | ` `                              |
 
+## Linking existing users
+
+If no TYPO3 user is linked to the OAuth2 identity yet, the extension links it to an existing user with the same username or email (extension setting `linkExistingUsers`, enabled by default). It never links:
+
+* administrators (backend),
+* disabled or expired users,
+* frontend users outside the site's `oauth2_storage_pid`,
+* any user while the IdP marks the email as unverified (`email_verified` claim present and not `true`),
+* any user if more than one user matches.
+
+Disable `linkExistingUsers` to link identities only to users created by this extension or linked by the user themselves. Disabled users stay disabled: an identity linked to a disabled user cannot log in. Version 4.0 will remove linking at login in favour of an admin command.
+
+```php
+$GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['xima_oauth2_extended']['linkExistingUsers'] = false;
+```
+
 ## FAQ
 
 <details>
