@@ -135,6 +135,7 @@ final class UserLinkingTest extends FunctionalTestCase
         self::assertSame(2, $created['pid'] ?? null);
         self::assertNotSame(1, $created['uid'] ?? null);
         self::assertSame([$created['uid']], $this->identityParents('tx_oauth2_feuser_provider_configuration', 'other-site'));
+        self::assertSame(0, $this->fetchUser('fe_users', (int)$created['uid'])['disable']);
     }
 
     private function backendFactory(array $claims, array $options = [], bool $linkExistingUsers = true): BackendUserFactory

@@ -165,7 +165,7 @@ class FrontendUserFactory extends AbstractUserFactory
             'pid' => $targetPid,
             'crdate' => time(),
             'tstamp' => time(),
-            'disable' => 1,
+            'disable' => 0,
             'starttime' => 0,
             'endtime' => 0,
             'password' => $saltingInstance->getHashedPassword(md5(uniqid())),

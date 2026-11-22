@@ -275,7 +275,7 @@ class BackendUserFactory extends AbstractUserFactory
             'crdate' => time(),
             'tstamp' => time(),
             'admin' => 0,
-            'disable' => 1,
+            'disable' => 0,
             'starttime' => 0,
             'endtime' => 0,
             'password' => $saltingInstance->getHashedPassword(md5(uniqid('', true))),
