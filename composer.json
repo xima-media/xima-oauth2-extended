@@ -30,11 +30,17 @@
 		"ssch/typo3-rector": "^1.2 || ^3.4",
 		"symfony/translation": "^7.2",
 		"typo3/cms-base-distribution": "^12.4 || ^13.4",
-		"typo3/cms-lowlevel": "^12.4 || ^13.4"
+		"typo3/cms-lowlevel": "^12.4 || ^13.4",
+		"typo3/testing-framework": "^8.2 || ^9.0"
 	},
 	"autoload": {
 		"psr-4": {
 			"Xima\\XimaOauth2Extended\\": "Classes"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Xima\\XimaOauth2Extended\\Tests\\": "Tests/"
 		}
 	},
 	"config": {
@@ -64,7 +70,6 @@
 			"@ci:php:lint",
 			"@ci:php:fixer",
 			"@ci:php:stan",
-			"@ci:php:rector",
 			"@ci:typoscript:lint",
 			"@ci:xml:lint",
 			"@ci:yaml:lint"
@@ -88,6 +93,7 @@
 			"@xml:lint",
 			"@yaml:lint"
 		],
+		"test:functional": "phpunit -c phpunit.functional.xml",
 		"typoscript:lint": "typoscript-lint",
 		"xml:lint": "find ./ -name '*.xlf' ! -path './vendor/*' ! -path './var/*' | xargs -r xmllint --schema vendor/symfony/translation/Resources/schemas/xliff-core-1.2-transitional.xsd --noout",
 		"yaml:lint": "find ./ ! -path './vendor/*' ! -path '*/node_modules/*' \\( -name '*.yaml' -o -name '*.yml' \\) | xargs -r yaml-lint"

@@ -13,8 +13,8 @@ parameters:
 			path: Classes/EventListener/FrontendUserLookup.php
 
 		-
-			message: '#^Method TYPO3\\CMS\\Core\\Configuration\\ExtensionConfiguration\:\:get\(\) invoked with 3 parameters, 1\-2 required\.$#'
-			identifier: arguments.count
+			message: '#^Property Xima\\XimaOauth2Extended\\EventListener\\SkipSudoModeRequirement\:\:\$extensionConfiguration is never read, only written\.$#'
+			identifier: property.onlyWritten
 			count: 1
 			path: Classes/EventListener/SkipSudoModeRequirement.php
 

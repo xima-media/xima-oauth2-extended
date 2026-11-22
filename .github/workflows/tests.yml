@@ -1,0 +1,95 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  functional-tests:
+    name: Functional (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # TYPO3 v12 is in ELTS; its public releases carry unpatched security
+          # advisories that Composer blocks by default. --no-security-blocking
+          # lets the v12 cells install for compatibility testing only.
+          - { typo3-version: "12.4", php-version: "8.2", composer-options: "--no-security-blocking" }
+          - { typo3-version: "12.4", php-version: "8.3", composer-options: "--no-security-blocking" }
+          - { typo3-version: "13.4", php-version: "8.2" }
+          - { typo3-version: "13.4", php-version: "8.3" }
+          - { typo3-version: "13.4", php-version: "8.4" }
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup DDEV
+        uses: ddev/github-action-setup-ddev@v1
+        with:
+          autostart: false
+
+      - name: Configure and start DDEV
+        run: |
+          ddev config --php-version=${{ matrix.php-version }}
+          ddev start
+
+      # A changed core version can leave stale class-alias-loader files behind; a second run repairs them
+      - name: Install Composer dependencies
+        run: |
+          ddev composer update --no-progress --with=typo3/cms-core:"^${{ matrix.typo3-version }}" ${{ matrix.composer-options }} \
+            || ddev composer update --no-progress --with=typo3/cms-core:"^${{ matrix.typo3-version }}" ${{ matrix.composer-options }}
+
+      - name: Run functional tests
+        run: ddev composer test:functional
+
+  acceptance-tests:
+    name: Acceptance (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { typo3-version: "13.4", php-version: "8.4" }
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup DDEV
+        uses: ddev/github-action-setup-ddev@v1
+        with:
+          autostart: false
+
+      - name: Configure and start DDEV
+        run: |
+          ddev config --php-version=${{ matrix.php-version }}
+          ddev start
+
+      - name: Install Composer dependencies
+        run: |
+          ddev composer update --no-progress --with=typo3/cms-core:"^${{ matrix.typo3-version }}" ${{ matrix.composer-options }} \
+            || ddev composer update --no-progress --with=typo3/cms-core:"^${{ matrix.typo3-version }}" ${{ matrix.composer-options }}
+
+      - name: Init TYPO3
+        run: ddev init-typo3
+
+      - name: Run acceptance tests
+        uses: nick-fields/retry@v4
+        with:
+          max_attempts: 3
+          retry_on: error
+          timeout_minutes: 10
+          command: ddev playwright test
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: acceptance-reports-${{ matrix.php-version }}-${{ matrix.typo3-version }}
+          path: Tests/Playwright/playwright-report/

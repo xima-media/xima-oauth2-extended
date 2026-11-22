@@ -1,0 +1,18 @@
+services:
+  mock-oauth2:
+    container_name: ddev-${DDEV_SITENAME}-mock-oauth2
+    image: ghcr.io/navikt/mock-oauth2-server:7.0.1
+    environment:
+      - SERVER_PORT=8080
+      - JSON_CONFIG_PATH=/config/config.json
+      - JAVA_TOOL_OPTIONS=-Xmx128m
+      - VIRTUAL_HOST=oidc.${DDEV_SITENAME}.${DDEV_TLD:-ddev.site}
+      - HTTP_EXPOSE=80:8080
+      - HTTPS_EXPOSE=443:8080
+    expose:
+      - "8080"
+    volumes:
+      - ../Tests/Fixtures/MockOAuth2:/config:ro
+    labels:
+      com.ddev.site-name: ${DDEV_SITENAME}
+      com.ddev.approot: ${DDEV_APPROOT}

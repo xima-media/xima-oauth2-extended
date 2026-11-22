@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2086
+set -e
+
+## Description: Initialize the TYPO3 test instance (fresh database, mock OAuth2 providers, fixtures)
+## Usage: init-typo3
+## Example: ddev init-typo3
+
+readonly dbHost="db"
+readonly dbUser="db"
+readonly dbPassword="db"
+readonly dbName="db"
+readonly dbCredentials="-h${dbHost} -u${dbUser} -p${dbPassword}"
+readonly projectPath="/var/www/html"
+readonly fixturePath="${projectPath}/Tests/Acceptance/Fixtures"
+readonly typo3Binary="${projectPath}/vendor/bin/typo3"
+
+function _progress() {
+    printf "%s... " "$1"
+}
+
+function _done() {
+    printf "\e[32mDone\e[39m\n"
+}
+
+cd "$projectPath"
+
+# Keeps an already resolved core version (e.g. after "composer update --with=typo3/cms-core:^12.4")
+if [ ! -x "$typo3Binary" ]; then
+    _progress "Installing Composer dependencies"
+    composer install --no-progress --quiet
+    _done
+fi
+
+_progress "Creating empty database"
+mysql -Nse "SHOW TABLES" $dbCredentials "$dbName" | while read -r table; do
+    mysql -e "DROP TABLE ${table}" $dbCredentials "$dbName"
+done
+rm -f config/system/settings.php config/system/additional.php
+_done
+
+export TYPO3_DB_DRIVER=mysqli
+export TYPO3_DB_USERNAME="$dbUser"
+export TYPO3_DB_PASSWORD="$dbPassword"
+export TYPO3_DB_PORT=3306
+export TYPO3_DB_HOST="$dbHost"
+export TYPO3_DB_DBNAME="$dbName"
+export TYPO3_SETUP_ADMIN_EMAIL=admin@example.com
+export TYPO3_SETUP_ADMIN_USERNAME=admin
+export TYPO3_SETUP_ADMIN_PASSWORD=Passw0rd!
+export TYPO3_SERVER_TYPE=other
+export TYPO3_PROJECT_NAME="EXT:xima_oauth2_extended"
+
+_progress "Setting up TYPO3 installation"
+"$typo3Binary" setup --no-interaction --force --quiet
+_done
+
+_progress "Installing site configuration and OAuth2 providers"
+rm -rf config/sites
+cp -r "$fixturePath/sites" config/sites
+cp "$fixturePath/additional.php" config/system/additional.php
+"$typo3Binary" cache:flush
+_done
+
+for file in "$fixturePath"/*.sql; do
+    _progress "Importing DB fixture \"$(basename "$file")\""
+    mysql $dbCredentials "$dbName" < "$file"
+    _done
+done
