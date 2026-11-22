@@ -31,8 +31,9 @@ jobs:
           ddev composer config github-oauth.github.com ${{ secrets.GITHUB_TOKEN }}
           ddev composer install --no-progress
 
+      # typo3/cms-core itself requires the abandoned doctrine/annotations; only advisories fail the job
       - name: Composer audit
-        run: ddev composer audit
+        run: ddev composer audit --abandoned=report
 
       - name: Run static code analysis
         run: ddev composer ci:sca
