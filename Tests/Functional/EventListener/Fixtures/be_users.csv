@@ -1,0 +1,6 @@
+"be_users"
+,"uid","pid","username","admin","tx_oauth2_client_configs"
+,1,0,"linked-admin",1,1
+,2,0,"unlinked-admin",1,0
+,3,0,"linked-editor",0,1
+,4,0,"unlinked-editor",0,0
