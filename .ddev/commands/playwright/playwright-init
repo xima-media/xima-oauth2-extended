@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+## Description: Scaffold Playwright test structure into the project
+## Usage: playwright-init
+## Example: "ddev playwright-init"
+
+SCAFFOLD_BASE_URL="https://raw.githubusercontent.com/xima-media/ddev-playwright/main/scaffold"
+
+cd /var/www/html || exit 1
+
+download_if_missing() {
+    local dest="$1"
+    local url="${SCAFFOLD_BASE_URL}/$1"
+    if [ -f "$dest" ]; then
+        echo "$dest already exists, skipping."
+        return
+    fi
+    mkdir -p "$(dirname "$dest")"
+    if wget -qO "$dest" "$url"; then
+        echo "Created $dest"
+    else
+        echo "Error: failed to download $url" >&2
+        exit 1
+    fi
+}
+
+if ! compgen -G "playwright.config.*" > /dev/null; then
+    download_if_missing "playwright.config.js"
+fi
+download_if_missing "Tests/Playwright/helpers/axe-helper.js"
+download_if_missing "Tests/Playwright/helpers/common-checks.js"
+
+# Conditionally copy an .env file if an example file exists
+[ -f .env.example ] && [ ! -f .env ] && cp -n .env.example .env
+
+exit 0

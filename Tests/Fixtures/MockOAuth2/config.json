@@ -1,0 +1,69 @@
+{
+	"interactiveLogin": true,
+	"httpServer": "NettyWrapper",
+	"tokenCallbacks": [
+		{
+			"issuerId": "default",
+			"requestMappings": [
+				{
+					"requestParam": "subject",
+					"match": "new-user",
+					"claims": {
+						"sub": "new-user",
+						"email": "new-user@example.org",
+						"name": "New user"
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "new-grouped",
+					"claims": {
+						"sub": "new-grouped",
+						"email": "new-grouped@example.org",
+						"name": "New grouped",
+						"groups": ["typo3-editors"]
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "new-ungrouped",
+					"claims": {
+						"sub": "new-ungrouped",
+						"email": "new-ungrouped@example.org",
+						"name": "New ungrouped",
+						"groups": ["unmapped"]
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "new-admin-all",
+					"claims": {
+						"sub": "new-admin-all",
+						"email": "new-admin-all@example.org",
+						"name": "New admin all"
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "new-admin-group",
+					"claims": {
+						"sub": "new-admin-group",
+						"email": "new-admin-group@example.org",
+						"name": "New admin group",
+						"groups": ["typo3-admins"]
+					}
+				},
+				{
+					"requestParam": "subject",
+					"match": "new-nonadmin-group",
+					"claims": {
+						"sub": "new-nonadmin-group",
+						"email": "new-nonadmin-group@example.org",
+						"name": "New non-admin group",
+						"groups": ["typo3-editors"]
+					}
+				}
+			]
+		}
+	]
+}

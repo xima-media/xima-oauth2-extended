@@ -134,3 +134,16 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']['1616569531'
 ```
 
 </details>
+
+## Development
+
+The DDEV project runs TYPO3 with [navikt/mock-oauth2-server](https://github.com/navikt/mock-oauth2-server) as identity provider and Playwright for end-to-end tests:
+
+```bash
+ddev start
+ddev init-typo3
+ddev playwright test
+ddev composer test:functional
+```
+
+`ddev init-typo3` resets the database and fixtures. The mock personas live in `Tests/Fixtures/MockOAuth2/config.json`.
